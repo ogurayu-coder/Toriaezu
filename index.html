@@ -184,6 +184,8 @@
   .sheet{
     background:var(--paper);
     width:100%;max-width:640px;
+    max-height:88vh;
+    overflow-y:auto;
     border-radius:20px 20px 0 0;
     padding:20px 18px 26px;
     transform:translateY(20px);
@@ -226,6 +228,53 @@
     text-align:center;font-size:11px;color:var(--ink-soft);
     padding:10px;
   }
+
+  /* Calendar */
+  .calendarPanel{
+    display:none;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:12px;
+    margin-bottom:14px;
+  }
+  .cal-nav{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:10px;
+  }
+  .cal-nav button{
+    background:none;border:none;font-size:18px;color:var(--ink);
+    cursor:pointer;padding:4px 12px;line-height:1;
+  }
+  .cal-nav .cal-label{
+    font-family:'Baloo 2',sans-serif;font-weight:700;font-size:15px;
+  }
+  .cal-grid{
+    display:grid;grid-template-columns:repeat(7,1fr);gap:4px;
+  }
+  .cal-wd{
+    text-align:center;font-size:10px;color:var(--ink-soft);
+    font-weight:700;padding-bottom:4px;
+  }
+  .cal-day{
+    position:relative;aspect-ratio:1;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border-radius:8px;font-size:12px;color:var(--ink);
+    cursor:pointer;background:var(--paper);
+    border:1px solid transparent;
+  }
+  .cal-day.empty{visibility:hidden;cursor:default;}
+  .cal-day.today{border-color:var(--walk);font-weight:700;}
+  .cal-day.has-note{background:rgba(91,95,151,.16);}
+  .cal-day .dots{display:flex;gap:2px;margin-top:2px;min-height:5px;}
+  .cal-day .dot{width:5px;height:5px;border-radius:50%;}
+  .cal-day .star{position:absolute;top:1px;right:2px;font-size:8px;}
+  .cal-legend{
+    display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;
+    font-size:10px;color:var(--ink-soft);
+  }
+  .cal-legend span{display:inline-flex;align-items:center;gap:4px;}
+  .cal-legend .dot{width:7px;height:7px;border-radius:50%;display:inline-block;}
 </style>
 </head>
 <body>
@@ -261,8 +310,19 @@
   </div>
 
   <div style="display:flex;gap:8px;margin-bottom:8px;">
+    <button id="calendarBtn" style="flex:1;font-size:11px;padding:8px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink-soft);cursor:pointer;">📅 カレンダー</button>
     <button id="backupBtn" style="flex:1;font-size:11px;padding:8px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink-soft);cursor:pointer;">バックアップを表示</button>
     <button id="restoreBtn" style="flex:1;font-size:11px;padding:8px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink-soft);cursor:pointer;">バックアップを復元</button>
+  </div>
+
+  <div class="calendarPanel" id="calendarPanel">
+    <div class="cal-nav">
+      <button id="calPrev">‹</button>
+      <div class="cal-label" id="calLabel"></div>
+      <button id="calNext">›</button>
+    </div>
+    <div class="cal-grid" id="calendarGrid"></div>
+    <div class="cal-legend" id="calLegend"></div>
   </div>
 
   <div id="backupPanel" style="display:none;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:14px;">
@@ -287,6 +347,17 @@
     <div class="actions">
       <button class="cancel" id="cancelBtn">やめる</button>
       <button class="save" id="saveBtn">記録する</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="dayOverlay">
+  <div class="sheet">
+    <h2 id="dayTitle"></h2>
+    <div class="quickadd" id="dayQuickadd"></div>
+    <div id="dayEntries"></div>
+    <div class="actions">
+      <button class="cancel" id="dayCloseBtn">閉じる</button>
     </div>
   </div>
 </div>
@@ -335,9 +406,13 @@ let activeDog = DOGS[0].id;
 let logs = {}; // {dogId: [entries]}
 let pendingType = null;
 let pendingChip = null;
+let pendingDate = null;
+let currentDayDate = null;
+let calState = (()=>{ const d=new Date(); return {year:d.getFullYear(), month:d.getMonth()}; })();
 
 const $ = (id) => document.getElementById(id);
 
+function pad2(n){ return String(n).padStart(2,'0'); }
 function todayStr(){ return new Date().toISOString().slice(0,10); }
 
 function fmtDayLabel(dateStr){
@@ -477,9 +552,11 @@ function renderTimeline(){
   wrap.querySelectorAll('.del').forEach(btn=>{
     btn.onclick = async ()=>{
       const id = btn.dataset.id;
-      logs[activeDog] = (logs[activeDog]||[]).filter(e=>e.id!==id);
-      await saveLogsWithRetry();
+      await withFreshLogs(()=>{
+        logs[activeDog] = (logs[activeDog]||[]).filter(e=>e.id!==id);
+      });
       renderTimeline();
+      renderCalendar();
     };
   });
 }
@@ -494,14 +571,153 @@ function renderAll(){
   renderTags();
   renderHeader();
   renderTimeline();
+  renderCalendar();
 }
 
-function openSheet(type){
+/* ---------- Calendar ---------- */
+
+function renderCalendar(){
+  const grid = $('calendarGrid');
+  const y = calState.year, m = calState.month;
+  $('calLabel').textContent = `${y}年${m+1}月`;
+  grid.innerHTML = '';
+
+  ['日','月','火','水','木','金','土'].forEach(wd=>{
+    const el = document.createElement('div');
+    el.className='cal-wd';
+    el.textContent = wd;
+    grid.appendChild(el);
+  });
+
+  const firstDay = new Date(y, m, 1).getDay();
+  const daysInMonth = new Date(y, m+1, 0).getDate();
+  const today = todayStr();
+
+  for(let i=0;i<firstDay;i++){
+    const el = document.createElement('div');
+    el.className='cal-day empty';
+    grid.appendChild(el);
+  }
+
+  for(let d=1; d<=daysInMonth; d++){
+    const dateStr = `${y}-${pad2(m+1)}-${pad2(d)}`;
+    const entries = (logs[activeDog]||[]).filter(e=>e.at.slice(0,10)===dateStr);
+    const types = [...new Set(entries.map(e=>e.type))];
+    const hasNote = entries.some(e=>e.type==='note');
+
+    const el = document.createElement('div');
+    el.className = 'cal-day' + (dateStr===today?' today':'') + (hasNote?' has-note':'');
+    el.innerHTML = `
+      <span>${d}</span>
+      <div class="dots">${types.slice(0,4).map(t=>`<span class="dot" style="background:${TYPES[t].color}"></span>`).join('')}</div>
+      ${hasNote?'<span class="star">📝</span>':''}
+    `;
+    el.onclick = ()=> openDayDetail(dateStr);
+    grid.appendChild(el);
+  }
+
+  const legend = $('calLegend');
+  legend.innerHTML = Object.keys(TYPES).map(k=>{
+    const t = TYPES[k];
+    return `<span><span class="dot" style="background:${t.color}"></span>${t.label}</span>`;
+  }).join('');
+}
+
+$('calPrev').onclick = ()=>{
+  calState.month--;
+  if(calState.month<0){ calState.month=11; calState.year--; }
+  renderCalendar();
+};
+$('calNext').onclick = ()=>{
+  calState.month++;
+  if(calState.month>11){ calState.month=0; calState.year++; }
+  renderCalendar();
+};
+
+$('calendarBtn').onclick = ()=>{
+  const panel = $('calendarPanel');
+  const showing = panel.style.display === 'block';
+  panel.style.display = showing ? 'none' : 'block';
+  if(!showing){
+    renderCalendar();
+    panel.scrollIntoView({behavior:'smooth', block:'center'});
+  }
+};
+
+/* ---------- Day detail (view + retroactive add) ---------- */
+
+function renderDayEntries(dateStr){
+  const wrap = $('dayEntries');
+  wrap.innerHTML = '';
+  const entries = (logs[activeDog]||[]).filter(e=>e.at.slice(0,10)===dateStr).sort((a,b)=>a.at.localeCompare(b.at));
+  if(entries.length===0){
+    wrap.innerHTML = '<div class="empty">この日の記録はまだありません。</div>';
+    return;
+  }
+  entries.forEach(e=>{
+    const t = TYPES[e.type];
+    const row = document.createElement('div');
+    row.className='entry';
+    row.style.setProperty('--c', t.color);
+    const time = e.at.slice(11,16);
+    row.innerHTML = `
+      <div class="ic">${t.icon}</div>
+      <div class="body">
+        <div class="time">${time} ・ ${t.label}${e.chip? ' ・ '+e.chip:''}</div>
+        ${e.text? `<div class="text">${escapeHtml(e.text)}</div>` : ''}
+      </div>
+      <button class="del" data-id="${e.id}">✕</button>
+    `;
+    wrap.appendChild(row);
+  });
+  wrap.querySelectorAll('.del').forEach(btn=>{
+    btn.onclick = async ()=>{
+      const id = btn.dataset.id;
+      await withFreshLogs(()=>{
+        logs[activeDog] = (logs[activeDog]||[]).filter(e=>e.id!==id);
+      });
+      renderDayEntries(dateStr);
+      renderCalendar();
+      renderTimeline();
+    };
+  });
+}
+
+function openDayDetail(dateStr){
+  currentDayDate = dateStr;
+  $('dayTitle').textContent = `${fmtDayLabel(dateStr)}（${dateStr}）`;
+
+  const qwrap = $('dayQuickadd');
+  qwrap.innerHTML = '';
+  Object.keys(TYPES).forEach(key=>{
+    const t = TYPES[key];
+    const btn = document.createElement('button');
+    btn.className = `qbtn ${key}`;
+    btn.innerHTML = `<span class="ic">${t.icon}</span>${t.label}`;
+    btn.onclick = ()=> openSheet(key, dateStr);
+    qwrap.appendChild(btn);
+  });
+
+  renderDayEntries(dateStr);
+  $('dayOverlay').classList.add('show');
+}
+
+function closeDayOverlay(){
+  $('dayOverlay').classList.remove('show');
+  currentDayDate = null;
+}
+$('dayCloseBtn').onclick = closeDayOverlay;
+$('dayOverlay').onclick = (e)=>{ if(e.target.id==='dayOverlay') closeDayOverlay(); };
+
+/* ---------- Entry sheet (now date-aware) ---------- */
+
+function openSheet(type, dateOverride){
   pendingType = type;
   pendingChip = null;
+  pendingDate = dateOverride || todayStr();
   const t = TYPES[type];
   $('sheetIcon').textContent = t.icon;
-  $('sheetTitle').textContent = t.label + 'を記録';
+  $('sheetTitle').textContent = t.label + 'を記録' + (pendingDate!==todayStr() ? `（${fmtDayLabel(pendingDate)}）` : '');
   const now = new Date();
   $('entryTime').value = now.toTimeString().slice(0,5);
   $('entryText').value = '';
@@ -527,10 +743,22 @@ function closeSheet(){
   $('overlay').classList.remove('show');
 }
 
+// Reads the latest saved data fresh from storage, applies `mutator` to it,
+// then saves. This avoids a stale tab (holding old data in memory) blindly
+// overwriting newer changes saved from another tab/session.
+async function withFreshLogs(mutator){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    logs = raw ? JSON.parse(raw) : {};
+  }catch(e){ /* keep in-memory logs as fallback */ }
+  mutator();
+  await saveLogsWithRetry();
+}
+
 async function saveEntry(){
   const time = $('entryTime').value || new Date().toTimeString().slice(0,5);
   const text = $('entryText').value.trim();
-  const date = todayStr();
+  const date = pendingDate || todayStr();
   const entry = {
     id: Date.now().toString(36)+Math.random().toString(36).slice(2,6),
     type: pendingType,
@@ -538,11 +766,13 @@ async function saveEntry(){
     chip: pendingChip,
     text: text,
   };
-  if(!logs[activeDog]) logs[activeDog]=[];
-  logs[activeDog].push(entry);
-  await saveLogsWithRetry();
+  await withFreshLogs(()=>{
+    if(!logs[activeDog]) logs[activeDog]=[];
+    logs[activeDog].push(entry);
+  });
   closeSheet();
-  renderTimeline();
+  renderAll();
+  if(currentDayDate){ renderDayEntries(currentDayDate); }
 }
 
 const STORAGE_KEY = 'dog-tracker-logs-v1';
@@ -558,7 +788,39 @@ async function loadLogs(){
   }
 }
 
+// Union-merge two {dogId: [entries]} objects by entry id, so a save from
+// a stale tab can never silently erase entries that another tab already
+// persisted. (Trade-off: a deletion made in one tab can reappear if a
+// stale tab merges afterward — see delete flow, which intentionally does
+// NOT merge, to keep deletions reliable within the tab that performed them.)
+function mergeLogs(a, b){
+  const result = {};
+  const dogIds = new Set([...Object.keys(a||{}), ...Object.keys(b||{})]);
+  dogIds.forEach(id=>{
+    const byId = new Map();
+    (a[id]||[]).forEach(e=>byId.set(e.id, e));
+    (b[id]||[]).forEach(e=>byId.set(e.id, e));
+    result[id] = Array.from(byId.values());
+  });
+  return result;
+}
+
 async function saveLogs(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const persisted = raw ? JSON.parse(raw) : {};
+    logs = mergeLogs(persisted, logs);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
+    const now = new Date();
+    $('status').textContent = `最終保存 ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}（この端末に保存）`;
+  }catch(e){
+    $('status').textContent = `⚠️ 保存エラー: ${e && e.message ? e.message : e}`;
+  }
+}
+
+async function saveLogsPlain(){
+  // Used for deletions: a straightforward overwrite, so a deletion always
+  // takes effect in the tab that performed it.
   try{
     localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
     const now = new Date();
@@ -582,7 +844,7 @@ $('searchClear').onclick = ()=>{
   renderTimeline();
 };
 
-document.querySelectorAll('.qbtn').forEach(btn=>{
+document.querySelectorAll('.quickadd .qbtn').forEach(btn=>{
   btn.onclick = ()=> openSheet(btn.dataset.type);
 });
 $('cancelBtn').onclick = closeSheet;
@@ -631,7 +893,7 @@ $('backupCopyBtn').onclick = async ()=>{
       logs = parsed;
       renderAll();
       $('backupPanelLabel').textContent = '復元しました。保存も試みます…';
-      await saveLogsWithRetry();
+      await saveLogsPlain();
       $('backupPanel').style.display = 'none';
     }catch(e){
       $('backupPanelLabel').textContent = '⚠️ 内容を読み込めませんでした。貼り付けた内容を確認してください。';
@@ -643,6 +905,19 @@ $('backupCopyBtn').onclick = async ()=>{
   await loadLogs();
   renderAll();
 })();
+
+// If the tab was left open and another tab/session changed the data,
+// re-sync as soon as this tab becomes active again (covers the delete
+// path, which intentionally overwrites rather than merges).
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible'){
+    loadLogs().then(renderAll);
+  }
+});
+window.addEventListener('pageshow', ()=>{
+  loadLogs().then(renderAll);
+});
+
 </script>
 </body>
 </html>
