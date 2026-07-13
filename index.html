@@ -235,12 +235,14 @@
     background:var(--card);
     border:1px solid var(--line);
     border-radius:12px;
-    padding:12px;
+    padding:10px 6px;
     margin-bottom:14px;
+    overflow:hidden;
   }
   .cal-nav{
     display:flex;align-items:center;justify-content:space-between;
     margin-bottom:10px;
+    padding:0 4px;
   }
   .cal-nav button{
     background:none;border:none;font-size:18px;color:var(--ink);
@@ -250,7 +252,8 @@
     font-family:'Baloo 2',sans-serif;font-weight:700;font-size:15px;
   }
   .cal-grid{
-    display:grid;grid-template-columns:repeat(7,1fr);gap:4px;
+    display:grid;grid-template-columns:repeat(7,1fr);gap:3px;
+    width:100%;
   }
   .cal-wd{
     text-align:center;font-size:10px;color:var(--ink-soft);
@@ -258,10 +261,12 @@
   }
   .cal-day{
     position:relative;aspect-ratio:1;
+    min-width:0;
     display:flex;flex-direction:column;align-items:center;justify-content:center;
-    border-radius:8px;font-size:12px;color:var(--ink);
+    border-radius:8px;font-size:11px;color:var(--ink);
     cursor:pointer;background:var(--paper);
     border:1px solid transparent;
+    padding:1px;
   }
   .cal-day.empty{visibility:hidden;cursor:default;}
   .cal-day.today{border-color:var(--walk);font-weight:700;}
@@ -272,6 +277,7 @@
   .cal-legend{
     display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;
     font-size:10px;color:var(--ink-soft);
+    padding:0 4px;
   }
   .cal-legend span{display:inline-flex;align-items:center;gap:4px;}
   .cal-legend .dot{width:7px;height:7px;border-radius:50%;display:inline-block;}
@@ -413,12 +419,20 @@ let calState = (()=>{ const d=new Date(); return {year:d.getFullYear(), month:d.
 const $ = (id) => document.getElementById(id);
 
 function pad2(n){ return String(n).padStart(2,'0'); }
-function todayStr(){ return new Date().toISOString().slice(0,10); }
+
+// Local (browser timezone) date string, e.g. "2026-07-12".
+// IMPORTANT: do NOT use toISOString() here — that returns the UTC date,
+// which drifts to the next/previous day depending on the user's timezone
+// offset (e.g. in Mexico, evening local time is already the next day in UTC).
+function localDateStr(d){
+  return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+}
+function todayStr(){ return localDateStr(new Date()); }
 
 function fmtDayLabel(dateStr){
   const d = new Date(dateStr+'T00:00:00');
   const today = todayStr();
-  const y = new Date(Date.now()-86400000).toISOString().slice(0,10);
+  const y = localDateStr(new Date(Date.now()-86400000));
   if(dateStr===today) return '今日';
   if(dateStr===y) return '昨日';
   return d.toLocaleDateString('ja-JP',{month:'numeric',day:'numeric',weekday:'short'});
