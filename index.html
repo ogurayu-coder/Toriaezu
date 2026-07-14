@@ -302,7 +302,7 @@
   </div>
 
   <div style="position:relative;margin-bottom:14px;">
-    <input id="searchBox" type="text" placeholder="🔍 犬の名前・日付・メモで検索（例：発作、Mama、7/3）"
+    <input id="searchBox" type="text" placeholder="🔍 犬の名前・日付・メモで検索(例:発作、Mama、7/3)"
       style="width:100%;padding:11px 34px 11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-family:'Inter',sans-serif;font-size:13px;">
     <button id="searchClear" style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);border:none;background:none;color:var(--ink-soft);font-size:16px;cursor:pointer;">✕</button>
   </div>
@@ -349,7 +349,7 @@
     <h2><span id="sheetIcon"></span><span id="sheetTitle"></span></h2>
     <input type="time" id="entryTime">
     <div class="chiprow" id="chiprow"></div>
-    <textarea id="entryText" placeholder="メモ（任意）"></textarea>
+    <textarea id="entryText" placeholder="メモ(任意)"></textarea>
     <div class="actions">
       <button class="cancel" id="cancelBtn">やめる</button>
       <button class="save" id="saveBtn">記録する</button>
@@ -699,7 +699,7 @@ function renderDayEntries(dateStr){
 
 function openDayDetail(dateStr){
   currentDayDate = dateStr;
-  $('dayTitle').textContent = `${fmtDayLabel(dateStr)}（${dateStr}）`;
+  $('dayTitle').textContent = `${fmtDayLabel(dateStr)}(${dateStr})`;
 
   const qwrap = $('dayQuickadd');
   qwrap.innerHTML = '';
@@ -731,7 +731,7 @@ function openSheet(type, dateOverride){
   pendingDate = dateOverride || todayStr();
   const t = TYPES[type];
   $('sheetIcon').textContent = t.icon;
-  $('sheetTitle').textContent = t.label + 'を記録' + (pendingDate!==todayStr() ? `（${fmtDayLabel(pendingDate)}）` : '');
+  $('sheetTitle').textContent = t.label + 'を記録' + (pendingDate!==todayStr() ? `(${fmtDayLabel(pendingDate)})` : '');
   const now = new Date();
   $('entryTime').value = now.toTimeString().slice(0,5);
   $('entryText').value = '';
@@ -760,13 +760,20 @@ function closeSheet(){
 // Reads the latest saved data fresh from storage, applies `mutator` to it,
 // then saves. This avoids a stale tab (holding old data in memory) blindly
 // overwriting newer changes saved from another tab/session.
+//
+// IMPORTANT: we save with saveLogsPlain() (a straight overwrite), not
+// saveLogsWithRetry() (which merges with whatever is currently in
+// localStorage). Since we've already refreshed `logs` from localStorage
+// just above, a merge here would re-combine a just-deleted entry with the
+// still-old copy in storage and silently resurrect it — which is why the
+// ✕ delete button looked like it "did nothing."
 async function withFreshLogs(mutator){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
     logs = raw ? JSON.parse(raw) : {};
   }catch(e){ /* keep in-memory logs as fallback */ }
   mutator();
-  await saveLogsWithRetry();
+  await saveLogsPlain();
 }
 
 async function saveEntry(){
@@ -804,9 +811,7 @@ async function loadLogs(){
 
 // Union-merge two {dogId: [entries]} objects by entry id, so a save from
 // a stale tab can never silently erase entries that another tab already
-// persisted. (Trade-off: a deletion made in one tab can reappear if a
-// stale tab merges afterward — see delete flow, which intentionally does
-// NOT merge, to keep deletions reliable within the tab that performed them.)
+// persisted.
 function mergeLogs(a, b){
   const result = {};
   const dogIds = new Set([...Object.keys(a||{}), ...Object.keys(b||{})]);
@@ -826,19 +831,20 @@ async function saveLogs(){
     logs = mergeLogs(persisted, logs);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
     const now = new Date();
-    $('status').textContent = `最終保存 ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}（この端末に保存）`;
+    $('status').textContent = `最終保存 ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}(この端末に保存)`;
   }catch(e){
     $('status').textContent = `⚠️ 保存エラー: ${e && e.message ? e.message : e}`;
   }
 }
 
 async function saveLogsPlain(){
-  // Used for deletions: a straightforward overwrite, so a deletion always
-  // takes effect in the tab that performed it.
+  // Straightforward overwrite (no merge), so both deletions and new
+  // entries saved via withFreshLogs() always take effect immediately in
+  // the tab that performed them.
   try{
     localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
     const now = new Date();
-    $('status').textContent = `最終保存 ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}（この端末に保存）`;
+    $('status').textContent = `最終保存 ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}(この端末に保存)`;
   }catch(e){
     $('status').textContent = `⚠️ 保存エラー: ${e && e.message ? e.message : e}`;
   }
@@ -899,7 +905,7 @@ $('backupCopyBtn').onclick = async ()=>{
       await navigator.clipboard.writeText($('backupText').value);
       $('backupPanelLabel').textContent = 'コピーしました。メモアプリなどに貼り付けて保存してください。';
     }catch(e){
-      $('backupPanelLabel').textContent = 'テキストを選択したので、そのままコピーしてください（自動コピーは使えませんでした）。';
+      $('backupPanelLabel').textContent = 'テキストを選択したので、そのままコピーしてください(自動コピーは使えませんでした)。';
     }
   }else{
     try{
@@ -921,8 +927,7 @@ $('backupCopyBtn').onclick = async ()=>{
 })();
 
 // If the tab was left open and another tab/session changed the data,
-// re-sync as soon as this tab becomes active again (covers the delete
-// path, which intentionally overwrites rather than merges).
+// re-sync as soon as this tab becomes active again.
 document.addEventListener('visibilitychange', ()=>{
   if(document.visibilityState === 'visible'){
     loadLogs().then(renderAll);
@@ -933,5 +938,4 @@ window.addEventListener('pageshow', ()=>{
 });
 
 </script>
-</body>
-</html>
+</body></html>
