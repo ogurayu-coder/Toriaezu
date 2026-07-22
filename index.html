@@ -292,9 +292,69 @@
   }
   .cal-legend span{display:inline-flex;align-items:center;gap:4px;}
   .cal-legend .dot{width:7px;height:7px;border-radius:50%;display:inline-block;}
+
+  /* First-time setup screen */
+  #setupScreen{display:none;min-height:100vh;padding:36px 20px;}
+  .setup-wrap{max-width:480px;margin:0 auto;}
+  .setup-wrap h1{
+    font-family:'Baloo 2',sans-serif;font-size:23px;margin:0 0 8px;
+  }
+  .setup-wrap p.lead{font-size:13px;color:var(--ink-soft);margin:0 0 24px;line-height:1.6;}
+  .setup-row{
+    background:var(--card);border:1px solid var(--line);
+    border-radius:14px;padding:14px;margin-bottom:12px;
+  }
+  .setup-row-top{display:flex;gap:8px;margin-bottom:8px;}
+  .setup-name{
+    flex:1;padding:10px 12px;border-radius:10px;border:1px solid var(--line);
+    background:var(--paper);font-family:'Inter',sans-serif;font-size:14px;
+  }
+  .setup-remove{
+    border:none;background:none;color:var(--ink-soft);font-size:18px;
+    cursor:pointer;padding:0 6px;
+  }
+  .setup-sub{
+    width:100%;padding:9px 12px;border-radius:10px;border:1px solid var(--line);
+    background:var(--paper);font-family:'Inter',sans-serif;font-size:12px;margin-bottom:10px;
+  }
+  .setup-field-label{font-size:12px;color:var(--ink);font-weight:700;margin:10px 0 6px;}
+  .setup-colors{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:6px;}
+  .setup-color-swatch{
+    width:30px;height:30px;border-radius:50%;
+    border:2px solid var(--line);cursor:pointer;padding:0;
+  }
+  .setup-color-swatch.sel{border-color:var(--ink);box-shadow:0 0 0 2px var(--paper), 0 0 0 4px var(--ink);}
+  .setup-styles{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;}
+  .setup-style-btn{
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    width:64px;padding:8px 4px 6px;border-radius:10px;
+    border:2px solid var(--line);background:var(--paper);cursor:pointer;
+  }
+  .setup-style-btn.sel{border-color:var(--ink);background:var(--card);}
+  .setup-style-btn .lbl{font-size:10px;color:var(--ink-soft);line-height:1.15;text-align:center;}
+  .setup-add{
+    width:100%;padding:12px;border-radius:12px;border:1px dashed var(--line);
+    background:transparent;color:var(--ink-soft);font-family:'Inter',sans-serif;
+    font-weight:600;font-size:13px;cursor:pointer;margin-bottom:20px;
+  }
+  .setup-start{
+    width:100%;padding:14px;border-radius:12px;border:none;
+    background:var(--ink);color:var(--paper);font-family:'Inter',sans-serif;
+    font-weight:700;font-size:15px;cursor:pointer;
+  }
 </style>
 </head>
 <body>
+
+<div id="setupScreen">
+  <div class="setup-wrap">
+    <h1>🐾 わんこノートへようこそ</h1>
+    <p class="lead">記録するワンちゃんを登録してください。名前と色を選ぶだけです(あとから「はじめる」を押す前なら何匹でも追加・削除できます)。</p>
+    <div id="setupDogList"></div>
+    <button class="setup-add" id="setupAddDog">＋ ワンちゃんを追加</button>
+    <button class="setup-start" id="setupStart">はじめる</button>
+  </div>
+</div>
 
 <header>
   <h1>🐾 <span>わんこ</span>ノート</h1>
@@ -330,6 +390,12 @@
     <button id="calendarBtn" style="flex:1;font-size:11px;padding:8px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink-soft);cursor:pointer;">📅 カレンダー</button>
     <button id="backupBtn" style="flex:1;font-size:11px;padding:8px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink-soft);cursor:pointer;">バックアップを表示</button>
     <button id="restoreBtn" style="flex:1;font-size:11px;padding:8px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink-soft);cursor:pointer;">バックアップを復元</button>
+  </div>
+  <div style="margin-bottom:8px;">
+    <button id="manageDogsBtn" style="width:100%;font-size:12px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-weight:600;cursor:pointer;">🐾 犬を管理(追加・編集・削除)</button>
+  </div>
+  <div style="margin-bottom:14px;">
+    <button id="resetSetupBtn" style="width:100%;font-size:10px;padding:6px;border-radius:10px;border:1px dashed var(--line);background:transparent;color:var(--ink-soft);cursor:pointer;">⚠️ 全部消して最初からやり直す(テスト用・記録も全消去)</button>
   </div>
 
   <div class="calendarPanel" id="calendarPanel">
@@ -379,17 +445,76 @@
   </div>
 </div>
 
+<div class="overlay" id="manageOverlay">
+  <div class="sheet">
+    <h2>🐾 犬を管理</h2>
+    <p style="font-size:12px;color:var(--ink-soft);margin:-8px 0 14px;line-height:1.6;">名前・見た目の編集、追加、削除ができます。「キャンセル」を押せば何も変更されません。削除も「保存する」を押すまでは確定しないので、安心して試せます。</p>
+    <div id="manageDogList"></div>
+    <button class="setup-add" id="manageAddDog">＋ ワンちゃんを追加</button>
+    <div class="actions">
+      <button class="cancel" id="manageCancelBtn">キャンセル</button>
+      <button class="save" id="manageSaveBtn">保存する</button>
+    </div>
+  </div>
+</div>
+
 <script>
-const DOGS = [
+// Built-in defaults — this is what Mo's own browser already has data
+// recorded against, so it must keep working exactly as before.
+const DEFAULT_DOGS = [
   {id:'chang',  name:'Chang',  coat:'#C68A4E', mask:true,  color:'#C68A4E', sub:'15歳・ボクサー'},
   {id:'carmen', name:'Carmen', coat:'#2E2C2A', mask:false, color:'#2E2C2A', sub:'黒い雑種・Mamaより年上'},
   {id:'mama',   name:'Mama',   coat:'#2E2C2A', mask:false, patch:true, color:'#2E2C2A', sub:'黒い雑種・2歳くらい'},
   {id:'junior', name:'Junior', coat:'#8A5A2B', mask:false, color:'#8A5A2B', sub:'茶色い雑種・やんちゃ盛り'},
 ];
 
-// Simple sitting-dog silhouette. `coat` tints the body; `mask` adds a
-// boxer-style dark muzzle; `patch` adds a small chest marking so Mama
-// reads as distinct from Carmen even though both are black.
+// The actual dog list in use on this browser. Populated by initDogs()
+// before anything else runs — either from a saved config, migrated from
+// DEFAULT_DOGS, or entered fresh via the setup screen.
+let DOGS = [];
+
+// 犬の毛色として自然な6色(赤は使わない)
+const COLOR_PRESETS = [
+  {hex:'#FFFFFF', label:'白'},
+  {hex:'#2E2C2A', label:'黒'},
+  {hex:'#8B8B82', label:'グレー'},
+  {hex:'#E7B93E', label:'黄色'},
+  {hex:'#B8863E', label:'黄土色'},
+  {hex:'#7A4A24', label:'茶色'},
+];
+
+// 耳の形と模様は別々に選ぶ(色は setup-colors で別途選択)
+const EAR_PRESETS = [
+  {key:'floppy', label:'たれ耳', ears:'floppy'},
+  {key:'pointy', label:'立ち耳', ears:'pointy'},
+];
+const MARK_PRESETS = [
+  {key:'plain', label:'ふつう',       mask:false, patch:false},
+  {key:'mask',  label:'鼻まわり黒',   mask:true,  patch:false},
+  {key:'patch', label:'胸に差し色',   mask:false, patch:true},
+];
+
+// Ear shape is a selectable trait: 'floppy' (default) or 'pointy'.
+// Floppy ears hang down the sides of the face with no silhouette above
+// the head, so from a distance they read as "barely there" — the
+// opposite of pointy ears, which spike upward. That contrast is the
+// whole point of the choice, so it needs to be legible even at small
+// icon sizes.
+function earsSVG(dog){
+  if(dog.ears === 'pointy'){
+    return `
+    <path d="M27 32 L15 4 L40 24 Z" fill="${dog.coat}"/>
+    <path d="M69 32 L81 4 L56 24 Z" fill="${dog.coat}"/>`;
+  }
+  return `
+    <path d="M28 26 Q14 34 17 54 Q22 62 29 58 Q26 42 33 30 Z" fill="${dog.coat}"/>
+    <path d="M68 26 Q82 34 79 54 Q74 62 67 58 Q70 42 63 30 Z" fill="${dog.coat}"/>`;
+}
+
+// Simple sitting-dog silhouette. `coat` tints the body; `ears` picks the
+// ear shape; `mask` adds a boxer-style dark muzzle; `patch` adds a small
+// chest marking, useful for telling same-color dogs apart (or approximating
+// a coat pattern) at a glance.
 function dogIconSVG(dog, size){
   const s = size || 34;
   const maskShape = dog.mask ? `<ellipse cx="50" cy="40" rx="13" ry="10" fill="#2E2C2A" opacity="0.85"/>` : '';
@@ -401,8 +526,7 @@ function dogIconSVG(dog, size){
     <ellipse cx="66" cy="80" rx="7" ry="10" fill="${dog.coat}"/>
     <path d="M74 55 Q92 45 88 30 Q80 34 72 46 Z" fill="${dog.coat}"/>
     <circle cx="48" cy="38" r="20" fill="${dog.coat}"/>
-    <ellipse cx="30" cy="24" rx="8" ry="13" fill="${dog.coat}" transform="rotate(-18 30 24)"/>
-    <ellipse cx="66" cy="24" rx="8" ry="13" fill="${dog.coat}" transform="rotate(18 66 24)"/>
+    ${earsSVG(dog)}
     ${maskShape}
     <circle cx="40" cy="36" r="2.4" fill="#20201E"/>
     <circle cx="56" cy="36" r="2.4" fill="#20201E"/>
@@ -419,7 +543,7 @@ const TYPES = {
   note: {label:'気になったこと', icon:'📝', color:'var(--note)', chips:[]},
 };
 
-let activeDog = DOGS[0].id;
+let activeDog = null;
 let logs = {}; // {dogId: [entries]}
 let pendingType = null;
 let pendingChip = null;
@@ -466,7 +590,7 @@ function renderHeader(){
   const dog = DOGS.find(d=>d.id===activeDog);
   $('dogname').textContent = dog.name;
   $('dogname').style.color = dog.color;
-  $('dogsub').textContent = dog.sub;
+  $('dogsub').textContent = dog.sub || '';
   $('dogHeaderIcon').innerHTML = dogIconSVG(dog,38);
 }
 
@@ -804,6 +928,7 @@ async function saveEntry(){
 }
 
 const STORAGE_KEY = 'dog-tracker-logs-v1';
+const DOGS_KEY = 'dog-tracker-dogs-v1';
 
 async function loadLogs(){
   try{
@@ -882,9 +1007,9 @@ let backupMode = null; // 'view' or 'restore'
 
 $('backupBtn').onclick = ()=>{
   backupMode = 'view';
-  $('backupPanelLabel').textContent = 'この内容を長押しして全選択→コピーし、メモアプリなどに保存してください。';
+  $('backupPanelLabel').textContent = 'この内容を長押しして全選択→コピーし、メモアプリなどに保存してください。(犬のリストと記録の両方が含まれます)';
   $('backupText').readOnly = true;
-  $('backupText').value = JSON.stringify(logs, null, 2);
+  $('backupText').value = JSON.stringify({dogs: DOGS, logs: logs}, null, 2);
   $('backupCopyBtn').textContent = 'コピーする';
   $('backupPanel').style.display = 'block';
   $('backupPanel').scrollIntoView({behavior:'smooth', block:'center'});
@@ -892,7 +1017,7 @@ $('backupBtn').onclick = ()=>{
 
 $('restoreBtn').onclick = ()=>{
   backupMode = 'restore';
-  $('backupPanelLabel').textContent = '保存しておいたバックアップ内容をここに貼り付けて「復元する」を押してください。';
+  $('backupPanelLabel').textContent = '保存しておいたバックアップ内容をここに貼り付けて「復元する」を押してください。(犬のリストごと復元されるので、削除した犬も元通りになります)';
   $('backupText').readOnly = false;
   $('backupText').value = '';
   $('backupCopyBtn').textContent = '復元する';
@@ -902,6 +1027,16 @@ $('restoreBtn').onclick = ()=>{
 
 $('backupCloseBtn').onclick = ()=>{
   $('backupPanel').style.display = 'none';
+};
+
+$('resetSetupBtn').onclick = ()=>{
+  const ok = confirm('この端末に保存されている犬のリストと、すべての記録が消えます。バックアップを取っていない記録は復元できません。本当に最初からやり直しますか?');
+  if(!ok) return;
+  try{
+    localStorage.removeItem(DOGS_KEY);
+    localStorage.removeItem(STORAGE_KEY);
+  }catch(e){}
+  location.reload();
 };
 
 $('backupCopyBtn').onclick = async ()=>{
@@ -917,7 +1052,29 @@ $('backupCopyBtn').onclick = async ()=>{
   }else{
     try{
       const parsed = JSON.parse($('backupText').value);
-      logs = parsed;
+      if(parsed && Array.isArray(parsed.dogs) && parsed.logs && typeof parsed.logs==='object'){
+        // Current format: dogs + logs bundled together, so restoring
+        // always reconnects the right records to the right dog by id.
+        DOGS = parsed.dogs;
+        logs = parsed.logs;
+        saveDogsConfig();
+      }else if(parsed && typeof parsed==='object' && !Array.isArray(parsed)){
+        // Backward compatibility with older backups that contained only
+        // the logs object (no dog roster). The dog list already on this
+        // browser is left untouched in that case.
+        logs = parsed;
+      }else{
+        throw new Error('unexpected backup format');
+      }
+      if(DOGS.length===0){
+        await saveLogsPlain();
+        $('backupPanel').style.display = 'none';
+        location.reload();
+        return;
+      }
+      if(!DOGS.find(d=>d.id===activeDog)){
+        activeDog = DOGS[0].id;
+      }
       renderAll();
       $('backupPanelLabel').textContent = '復元しました。保存も試みます…';
       await saveLogsPlain();
@@ -928,20 +1085,301 @@ $('backupCopyBtn').onclick = async ()=>{
   }
 };
 
-(async ()=>{
+/* ---------- Dogs config (per-browser) & first-time setup ---------- */
+
+function loadDogsConfig(){
+  try{
+    const raw = localStorage.getItem(DOGS_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+
+function saveDogsConfig(){
+  try{ localStorage.setItem(DOGS_KEY, JSON.stringify(DOGS)); }catch(e){}
+}
+
+function hasExistingLogEntries(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return false;
+    const parsed = JSON.parse(raw);
+    return Object.keys(parsed).some(k => Array.isArray(parsed[k]) && parsed[k].length>0);
+  }catch(e){ return false; }
+}
+
+// Decides which dog list this browser should use, without ever touching
+// data that's already recorded. Three cases:
+//  1. A dogs-config was already saved here (Mo's browser after first run,
+//     or a friend who already completed setup) -> just use it.
+//  2. No dogs-config yet, but there are already log entries in this
+//     browser's storage -> this is Mo's existing browser from before the
+//     setup screen existed. Silently adopt the built-in defaults as the
+//     config so nothing changes for her.
+//  3. Neither config nor logs exist -> a brand new browser (e.g. a
+//     friend's phone). Setup screen is needed.
+// Returns true if DOGS is ready to use, false if setup is required.
+function initDogs(){
+  const saved = loadDogsConfig();
+  if(saved && Array.isArray(saved) && saved.length){
+    DOGS = saved;
+    return true;
+  }
+  if(hasExistingLogEntries()){
+    DOGS = DEFAULT_DOGS;
+    saveDogsConfig();
+    return true;
+  }
+  return false;
+}
+
+// Builds one editable dog row, used both by the first-time setup screen
+// (dog=null, showDelete:false) and the "犬を管理" screen (dog=existing
+// dog, showDelete:true). Nothing here touches localStorage — the row only
+// holds form state until the caller reads it back with collectDogFromRow().
+function createDogRow(dog, opts){
+  opts = opts || {};
+  const row = document.createElement('div');
+  row.className = 'setup-row';
+  row.dataset.existingId = (dog && dog.id) ? dog.id : '';
+  row.innerHTML = `
+    <div class="setup-row-top">
+      <input type="text" class="setup-name" placeholder="名前(例: ポチ)" value="${dog ? escapeHtml(dog.name||'') : ''}">
+      <button type="button" class="setup-remove" title="削除">${opts.showDelete ? '🗑' : '✕'}</button>
+    </div>
+    <input type="text" class="setup-sub" placeholder="ひとこと(任意・例: 3歳、柴犬)" value="${dog ? escapeHtml(dog.sub||'') : ''}">
+    <div class="setup-field-label">耳の形</div>
+    <div class="setup-styles setup-ears"></div>
+    <div class="setup-field-label">模様</div>
+    <div class="setup-styles setup-marks"></div>
+    <div class="setup-field-label">毛色</div>
+    <div class="setup-colors"></div>
+  `;
+
+  const earsWrap = row.querySelector('.setup-ears');
+  const currentEarsKey = (dog && dog.ears==='pointy') ? 'pointy' : 'floppy';
+  EAR_PRESETS.forEach((ep)=>{
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'setup-style-btn' + (ep.key===currentEarsKey ? ' sel' : '');
+    btn.dataset.ears = ep.key;
+    const previewDog = {coat:'#8A5A2B', ears:ep.ears, mask:false, patch:false};
+    btn.innerHTML = `${dogIconSVG(previewDog,34)}<span class="lbl">${ep.label}</span>`;
+    btn.onclick = ()=>{
+      earsWrap.querySelectorAll('.setup-style-btn').forEach(b=>b.classList.remove('sel'));
+      btn.classList.add('sel');
+      refreshMarkPreviews(row);
+    };
+    earsWrap.appendChild(btn);
+  });
+
+  const marksWrap = row.querySelector('.setup-marks');
+  const currentMarkKey = (dog && dog.mask) ? 'mask' : ((dog && dog.patch) ? 'patch' : 'plain');
+  MARK_PRESETS.forEach((mp)=>{
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'setup-style-btn' + (mp.key===currentMarkKey ? ' sel' : '');
+    btn.dataset.mark = mp.key;
+    btn.onclick = ()=>{
+      marksWrap.querySelectorAll('.setup-style-btn').forEach(b=>b.classList.remove('sel'));
+      btn.classList.add('sel');
+    };
+    marksWrap.appendChild(btn);
+  });
+  refreshMarkPreviews(row);
+
+  const colorWrap = row.querySelector('.setup-colors');
+  const currentColor = dog ? dog.color : null;
+  const hasExactMatch = currentColor && COLOR_PRESETS.some(c=>c.hex.toLowerCase()===currentColor.toLowerCase());
+  const colorList = [];
+  if(currentColor && !hasExactMatch){
+    // Existing dogs created before the 6-color palette (or with a custom
+    // hex) keep their original color as a selected first swatch, so
+    // opening the manage screen never silently changes their look.
+    colorList.push({hex: currentColor, label:'現在の色'});
+  }
+  colorList.push(...COLOR_PRESETS);
+  colorList.forEach((c,i)=>{
+    const sw = document.createElement('button');
+    sw.type = 'button';
+    const isSel = currentColor ? (c.hex.toLowerCase()===currentColor.toLowerCase()) : (i===0);
+    sw.className = 'setup-color-swatch' + (isSel ? ' sel' : '');
+    sw.style.background = c.hex;
+    sw.title = c.label;
+    sw.dataset.color = c.hex;
+    sw.onclick = ()=>{
+      colorWrap.querySelectorAll('.setup-color-swatch').forEach(s=>s.classList.remove('sel'));
+      sw.classList.add('sel');
+    };
+    colorWrap.appendChild(sw);
+  });
+
+  row.querySelector('.setup-remove').onclick = ()=>{
+    if(opts.showDelete){
+      if(row.dataset.existingId){
+        const ok = confirm(`「${dog ? dog.name : ''}」を削除します。保存を押すと確定し、この犬の記録もこの端末から削除されます。よろしいですか?`);
+        if(!ok) return;
+      }
+      row.remove();
+    } else {
+      if($('setupDogList').children.length>1){ row.remove(); }
+    }
+  };
+  return row;
+}
+
+// Markings previews (nose mask / chest patch) depend on which ear shape
+// is currently selected in the same row, so they're rebuilt whenever the
+// ear choice changes, keeping the preview consistent with the final icon.
+function refreshMarkPreviews(row){
+  const earsSel = row.querySelector('.setup-ears .setup-style-btn.sel');
+  const earsKey = earsSel ? earsSel.dataset.ears : EAR_PRESETS[0].key;
+  const earsShape = (EAR_PRESETS.find(e=>e.key===earsKey) || EAR_PRESETS[0]).ears;
+  row.querySelectorAll('.setup-marks .setup-style-btn').forEach(btn=>{
+    const mp = MARK_PRESETS.find(m=>m.key===btn.dataset.mark);
+    const previewDog = {coat:'#8A5A2B', ears:earsShape, mask:mp.mask, patch:mp.patch};
+    btn.innerHTML = `${dogIconSVG(previewDog,34)}<span class="lbl">${mp.label}</span>`;
+  });
+}
+
+// Reads one row's form fields back into a plain dog object (without id).
+// Returns null if the name field was left blank, so blank rows are
+// silently skipped by both the setup screen and the manage screen.
+function collectDogFromRow(row){
+  const name = row.querySelector('.setup-name').value.trim();
+  if(!name) return null;
+  const sub = row.querySelector('.setup-sub').value.trim();
+  const selSwatch = row.querySelector('.setup-color-swatch.sel');
+  const color = selSwatch ? selSwatch.dataset.color : COLOR_PRESETS[0].hex;
+  const earsBtn = row.querySelector('.setup-ears .setup-style-btn.sel');
+  const earsKey = earsBtn ? earsBtn.dataset.ears : EAR_PRESETS[0].key;
+  const ears = (EAR_PRESETS.find(e=>e.key===earsKey) || EAR_PRESETS[0]).ears;
+  const markBtn = row.querySelector('.setup-marks .setup-style-btn.sel');
+  const markKey = markBtn ? markBtn.dataset.mark : MARK_PRESETS[0].key;
+  const mark = MARK_PRESETS.find(m=>m.key===markKey) || MARK_PRESETS[0];
+  return {name, sub, coat:color, color, ears, mask:mark.mask, patch:mark.patch};
+}
+
+function createSetupRow(){
+  return createDogRow(null, {showDelete:false});
+}
+
+function showSetupScreen(){
+  document.querySelector('header').style.display = 'none';
+  document.querySelector('main').style.display = 'none';
+  $('setupScreen').style.display = 'block';
+  $('setupDogList').innerHTML = '';
+  $('setupDogList').appendChild(createSetupRow());
+}
+
+$('setupAddDog').onclick = ()=>{
+  if($('setupDogList').children.length >= 8) return;
+  $('setupDogList').appendChild(createSetupRow());
+};
+
+$('setupStart').onclick = async ()=>{
+  const rows = Array.from($('setupDogList').children);
+  const newDogs = [];
+  rows.forEach((row, i)=>{
+    const base = collectDogFromRow(row);
+    if(!base) return;
+    newDogs.push({ id: 'dog_' + Date.now().toString(36) + '_' + i, ...base });
+  });
+  if(newDogs.length===0){
+    alert('少なくとも1匹、名前を入力してください。');
+    return;
+  }
+  DOGS = newDogs;
+  saveDogsConfig();
+  $('setupScreen').style.display = 'none';
+  document.querySelector('header').style.display = '';
+  document.querySelector('main').style.display = '';
+  activeDog = DOGS[0].id;
   await loadLogs();
   renderAll();
+};
+
+/* ---------- Manage dogs (add / edit / delete a single dog, without
+   touching the others; nothing is saved until "保存する" is pressed) ---------- */
+
+$('manageDogsBtn').onclick = ()=>{
+  $('manageDogList').innerHTML = '';
+  DOGS.forEach(dog=>{
+    $('manageDogList').appendChild(createDogRow(dog, {showDelete:true}));
+  });
+  $('manageOverlay').classList.add('show');
+};
+
+$('manageAddDog').onclick = ()=>{
+  if($('manageDogList').children.length >= 8) return;
+  $('manageDogList').appendChild(createDogRow(null, {showDelete:true}));
+};
+
+$('manageCancelBtn').onclick = ()=>{
+  $('manageOverlay').classList.remove('show');
+};
+$('manageOverlay').onclick = (e)=>{ if(e.target.id==='manageOverlay') $('manageOverlay').classList.remove('show'); };
+
+$('manageSaveBtn').onclick = async ()=>{
+  const rows = Array.from($('manageDogList').children);
+  const finalDogs = [];
+  const keptIds = new Set();
+  rows.forEach((row, i)=>{
+    const base = collectDogFromRow(row);
+    if(!base) return;
+    const existingId = row.dataset.existingId;
+    const id = existingId || ('dog_' + Date.now().toString(36) + '_' + i);
+    finalDogs.push({ id, ...base });
+    keptIds.add(id);
+  });
+  if(finalDogs.length===0){
+    alert('少なくとも1匹は必要です。');
+    return;
+  }
+  // Refresh logs fresh from storage before mutating, so we never clobber
+  // entries saved from another tab/session while this screen was open.
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    logs = raw ? JSON.parse(raw) : {};
+  }catch(e){ /* keep in-memory logs as fallback */ }
+
+  // Any dog that existed before this edit but isn't in the kept list was
+  // deliberately deleted -> drop its records too.
+  DOGS.forEach(d=>{
+    if(!keptIds.has(d.id)) delete logs[d.id];
+  });
+
+  DOGS = finalDogs;
+  saveDogsConfig();
+  await saveLogsPlain();
+  if(!DOGS.find(d=>d.id===activeDog)){
+    activeDog = DOGS[0].id;
+  }
+  $('manageOverlay').classList.remove('show');
+  renderAll();
+};
+
+(async ()=>{
+  const ready = initDogs();
+  if(ready){
+    activeDog = DOGS[0].id;
+    await loadLogs();
+    renderAll();
+  }else{
+    showSetupScreen();
+  }
 })();
 
 // If the tab was left open and another tab/session changed the data,
 // re-sync as soon as this tab becomes active again.
 document.addEventListener('visibilitychange', ()=>{
-  if(document.visibilityState === 'visible'){
+  if(document.visibilityState === 'visible' && DOGS.length){
     loadLogs().then(renderAll);
   }
 });
 window.addEventListener('pageshow', ()=>{
-  loadLogs().then(renderAll);
+  if(DOGS.length){
+    loadLogs().then(renderAll);
+  }
 });
 
 </script>
