@@ -494,8 +494,12 @@ const MARK_PRESETS = [
   {key:'patch', label:'胸に差し色',   mask:false, patch:true},
 ];
 
-// Ear shape is a selectable trait: 'floppy' (default, droopy) or
-// 'pointy' (upright triangular, e.g. shepherd/spitz-type dogs).
+// Ear shape is a selectable trait: 'floppy' (default) or 'pointy'.
+// Floppy ears hang down the sides of the face with no silhouette above
+// the head, so from a distance they read as "barely there" — the
+// opposite of pointy ears, which spike upward. That contrast is the
+// whole point of the choice, so it needs to be legible even at small
+// icon sizes.
 function earsSVG(dog){
   if(dog.ears === 'pointy'){
     return `
@@ -503,8 +507,8 @@ function earsSVG(dog){
     <path d="M69 32 L81 4 L56 24 Z" fill="${dog.coat}"/>`;
   }
   return `
-    <ellipse cx="30" cy="24" rx="8" ry="13" fill="${dog.coat}" transform="rotate(-18 30 24)"/>
-    <ellipse cx="66" cy="24" rx="8" ry="13" fill="${dog.coat}" transform="rotate(18 66 24)"/>`;
+    <path d="M28 26 Q14 34 17 54 Q22 62 29 58 Q26 42 33 30 Z" fill="${dog.coat}"/>
+    <path d="M68 26 Q82 34 79 54 Q74 62 67 58 Q70 42 63 30 Z" fill="${dog.coat}"/>`;
 }
 
 // Simple sitting-dog silhouette. `coat` tints the body; `ears` picks the
