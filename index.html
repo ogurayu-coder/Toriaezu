@@ -332,6 +332,14 @@
   }
   .setup-style-btn.sel{border-color:var(--ink);background:var(--card);}
   .setup-style-btn .lbl{font-size:10px;color:var(--ink-soft);line-height:1.15;text-align:center;}
+  .setup-colors{align-items:center;}
+  .setup-toggles{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;}
+  .setup-toggle-btn{
+    padding:8px 14px;border-radius:20px;border:2px solid var(--line);
+    background:var(--paper);color:var(--ink-soft);font-family:'Inter',sans-serif;
+    font-size:12px;font-weight:600;cursor:pointer;
+  }
+  .setup-toggle-btn.sel{border-color:var(--ink);background:var(--card);color:var(--ink);}
   .setup-add{
     width:100%;padding:12px;border-radius:12px;border:1px dashed var(--line);
     background:transparent;color:var(--ink-soft);font-family:'Inter',sans-serif;
@@ -462,10 +470,10 @@
 // Built-in defaults — this is what Mo's own browser already has data
 // recorded against, so it must keep working exactly as before.
 const DEFAULT_DOGS = [
-  {id:'chang',  name:'Chang',  coat:'#C68A4E', mask:true,  color:'#C68A4E', sub:'15歳・ボクサー'},
-  {id:'carmen', name:'Carmen', coat:'#2E2C2A', mask:false, color:'#2E2C2A', sub:'黒い雑種・Mamaより年上'},
-  {id:'mama',   name:'Mama',   coat:'#2E2C2A', mask:false, patch:true, color:'#2E2C2A', sub:'黒い雑種・2歳くらい'},
-  {id:'junior', name:'Junior', coat:'#8A5A2B', mask:false, color:'#8A5A2B', sub:'茶色い雑種・やんちゃ盛り'},
+  {id:'chang',  name:'Chang',  coat:'#C68A4E', ears:'pointy', mask:true,  color:'#C68A4E', sub:'15歳・ボクサー'},
+  {id:'carmen', name:'Carmen', coat:'#2E2C2A', ears:'pointy', mask:false, color:'#2E2C2A', sub:'黒い雑種・Mamaより年上'},
+  {id:'mama',   name:'Mama',   coat:'#2E2C2A', ears:'pointy', mask:false, patch:true, color:'#2E2C2A', sub:'黒い雑種・2歳くらい'},
+  {id:'junior', name:'Junior', coat:'#8A5A2B', ears:'pointy', mask:false, color:'#8A5A2B', sub:'茶色い雑種・やんちゃ盛り'},
 ];
 
 // The actual dog list in use on this browser. Populated by initDogs()
@@ -473,25 +481,39 @@ const DEFAULT_DOGS = [
 // DEFAULT_DOGS, or entered fresh via the setup screen.
 let DOGS = [];
 
-// 犬の毛色として自然な6色(赤は使わない)
-const COLOR_PRESETS = [
-  {hex:'#FFFFFF', label:'白'},
-  {hex:'#2E2C2A', label:'黒'},
-  {hex:'#8B8B82', label:'グレー'},
-  {hex:'#E7B93E', label:'黄色'},
-  {hex:'#B8863E', label:'黄土色'},
-  {hex:'#7A4A24', label:'茶色'},
+// 犬の毛色として自然な6色(赤は使わない)。
+// クリームは背景(paper/card)がどちらも白系のため、埋もれないよう
+// 黄味を効かせた色にしてある。三毛の下地色にも使う。
+const CREAM = '#F3E2B3';
+const GRAY = '#8B8B82';
+
+// 毛色・柄は1つだけ選ぶ(単色 or 三毛/ダルメシアンのような「柄」も
+// ここに同居させる — 三毛やダルメシアンはそれ自体が色なので、単色の
+// スウォッチと同列に選べる方が自然、という判断)。
+// type:'solid' はカラースウォッチ(丸)、type:'pattern' はプレビュー
+// アイコン(小さい犬の絵)で表示する。
+const COLOR_OPTIONS = [
+  {key:'cream',     type:'solid',   hex:CREAM,        label:'クリーム'},
+  {key:'black',     type:'solid',   hex:'#2E2C2A',    label:'黒'},
+  {key:'gray',      type:'solid',   hex:GRAY,         label:'グレー'},
+  {key:'yellow',    type:'solid',   hex:'#E7B93E',    label:'黄色'},
+  {key:'ocher',     type:'solid',   hex:'#B8863E',    label:'黄土色'},
+  {key:'brown',     type:'solid',   hex:'#7A4A24',    label:'茶色'},
+  {key:'tricolor',  type:'pattern', pattern:'tricolor',  label:'三毛'},
+  {key:'dalmatian', type:'pattern', pattern:'dalmatian', label:'ブチ'},
 ];
 
-// 耳の形と模様は別々に選ぶ(色は setup-colors で別途選択)
+// 耳の形(色・柄とは独立して選ぶ)
 const EAR_PRESETS = [
   {key:'floppy', label:'たれ耳', ears:'floppy'},
   {key:'pointy', label:'立ち耳', ears:'pointy'},
 ];
-const MARK_PRESETS = [
-  {key:'plain', label:'ふつう',       mask:false, patch:false},
-  {key:'mask',  label:'鼻まわり黒',   mask:true,  patch:false},
-  {key:'patch', label:'胸に差し色',   mask:false, patch:true},
+
+// マズル黒・胸白は単独のON/OFFトグル。単色でも三毛/ダルメシアンでも、
+// どのカラーとも自由に組み合わせられる(排他選択ではない)。
+const MARK_TOGGLES = [
+  {key:'mask',  label:'マズル黒', prop:'mask'},
+  {key:'patch', label:'胸に白',   prop:'patch'},
 ];
 
 // Ear shape is a selectable trait: 'floppy' (default) or 'pointy'.
@@ -511,27 +533,102 @@ function earsSVG(dog){
     <path d="M68 26 Q82 34 79 54 Q74 62 67 58 Q70 42 63 30 Z" fill="${dog.coat}"/>`;
 }
 
-// Simple sitting-dog silhouette. `coat` tints the body; `ears` picks the
-// ear shape; `mask` adds a boxer-style dark muzzle; `patch` adds a small
-// chest marking, useful for telling same-color dogs apart (or approximating
-// a coat pattern) at a glance.
+// Ear-shape-only preview (no body/head), used in the ear picker so the
+// choice is judged purely on silhouette rather than "which brown dog do
+// I like better".
+function earOnlyIconSVG(earsShape, size){
+  const s = size || 34;
+  const neutral = {coat: GRAY, ears: earsShape};
+  return `<svg class="icon" width="${s}" height="${s}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${earsSVG(neutral)}</svg>`;
+}
+
+// Flat circular swatch for the tricolor / brindle-spot ("ブチ") patterns,
+// drawn the same size/shape as the plain color swatches so all the
+// 毛色・柄 options sit in one consistent row — no full dog illustration.
+function patternSwatchIconSVG(patternKey, size){
+  const s = size || 30;
+  if(patternKey === 'dalmatian'){
+    return `<svg width="${s}" height="${s}" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="15" cy="15" r="15" fill="${GRAY}"/>
+      <circle cx="10" cy="10" r="2" fill="${CREAM}"/>
+      <circle cx="20" cy="9" r="1.6" fill="${CREAM}"/>
+      <circle cx="16" cy="18" r="2.1" fill="${CREAM}"/>
+      <circle cx="9" cy="19" r="1.6" fill="${CREAM}"/>
+      <circle cx="21" cy="19" r="1.4" fill="${CREAM}"/>
+    </svg>`;
+  }
+  if(patternKey === 'tricolor'){
+    return `<svg width="${s}" height="${s}" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="15" cy="15" r="15" fill="${CREAM}"/>
+      <circle cx="22" cy="8" r="2.1" fill="#2E2C2A"/>
+      <circle cx="8" cy="22" r="1.9" fill="#9A6B3A"/>
+      <circle cx="23" cy="21" r="1.5" fill="#2E2C2A"/>
+      <circle cx="7" cy="9" r="1.4" fill="#9A6B3A"/>
+    </svg>`;
+  }
+  return '';
+}
+
+// Extra markings painted on top of a solid base coat. Dalmatian and
+// tricolor coats always sit on a cream base (set via baseCoat in
+// dogIconSVG below) regardless of the chosen color swatch, since real
+// dalmatian/tricolor coloring isn't really "pick one color".
+function patternOverlaySVG(dog){
+  if(dog.pattern === 'dalmatian'){
+    // Gray base (set in dogIconSVG) with cream spots — kept visually
+    // distinct from the tricolor's cream base + dark patches.
+    return `
+    <circle cx="41" cy="34" r="1.7" fill="${CREAM}"/>
+    <circle cx="58" cy="31" r="1.5" fill="${CREAM}"/>
+    <circle cx="60" cy="46" r="1.3" fill="${CREAM}"/>
+    <circle cx="38" cy="47" r="1.3" fill="${CREAM}"/>
+    <circle cx="53" cy="59" r="2" fill="${CREAM}"/>
+    <circle cx="36" cy="63" r="1.6" fill="${CREAM}"/>
+    <circle cx="66" cy="65" r="1.5" fill="${CREAM}"/>
+    <circle cx="31" cy="79" r="1.3" fill="${CREAM}"/>
+    <circle cx="69" cy="81" r="1.3" fill="${CREAM}"/>
+    <circle cx="48" cy="73" r="1.2" fill="${CREAM}"/>`;
+  }
+  if(dog.pattern === 'tricolor'){
+    // Small dot cluster tucked into the body's lower edges/corners
+    // (haunches, tail base) — deliberately kept away from the face so it
+    // still reads clearly when combined with マズル黒.
+    return `
+    <circle cx="73" cy="58" r="2.1" fill="#2E2C2A"/>
+    <circle cx="77" cy="66" r="1.5" fill="#2E2C2A"/>
+    <circle cx="70" cy="73" r="1.7" fill="#9A6B3A"/>
+    <circle cx="26" cy="71" r="1.9" fill="#9A6B3A"/>
+    <circle cx="22" cy="79" r="1.5" fill="#2E2C2A"/>
+    <circle cx="31" cy="81" r="1.4" fill="#9A6B3A"/>`;
+  }
+  return '';
+}
+
+// Simple sitting-dog silhouette. `coat` tints the body for a solid-color
+// dog; `pattern` ('solid' | 'tricolor' | 'dalmatian') overrides that with
+// a cream base plus painted-on markings instead. `ears` picks the ear
+// shape; `mask` adds a boxer-style dark muzzle; `patch` adds a small
+// chest marking — both only apply when pattern is 'solid'.
 function dogIconSVG(dog, size){
   const s = size || 34;
+  const pattern = dog.pattern || 'solid';
+  const baseCoat = pattern === 'solid' ? dog.coat : (pattern === 'dalmatian' ? GRAY : CREAM);
   const maskShape = dog.mask ? `<ellipse cx="50" cy="40" rx="13" ry="10" fill="#2E2C2A" opacity="0.85"/>` : '';
   const patchShape = dog.patch ? `<ellipse cx="46" cy="60" rx="7" ry="9" fill="#F5EFE3" opacity="0.9"/>` : '';
   return `
   <svg class="icon" width="${s}" height="${s}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-    <ellipse cx="50" cy="66" rx="26" ry="20" fill="${dog.coat}"/>
-    <ellipse cx="30" cy="80" rx="7" ry="10" fill="${dog.coat}"/>
-    <ellipse cx="66" cy="80" rx="7" ry="10" fill="${dog.coat}"/>
-    <path d="M74 55 Q92 45 88 30 Q80 34 72 46 Z" fill="${dog.coat}"/>
-    <circle cx="48" cy="38" r="20" fill="${dog.coat}"/>
-    ${earsSVG(dog)}
+    <ellipse cx="50" cy="66" rx="26" ry="20" fill="${baseCoat}"/>
+    <ellipse cx="30" cy="80" rx="7" ry="10" fill="${baseCoat}"/>
+    <ellipse cx="66" cy="80" rx="7" ry="10" fill="${baseCoat}"/>
+    <path d="M74 55 Q92 45 88 30 Q80 34 72 46 Z" fill="${baseCoat}"/>
+    <circle cx="48" cy="38" r="20" fill="${baseCoat}"/>
+    ${earsSVG({...dog, coat: baseCoat})}
     ${maskShape}
     <circle cx="40" cy="36" r="2.4" fill="#20201E"/>
     <circle cx="56" cy="36" r="2.4" fill="#20201E"/>
     <ellipse cx="48" cy="46" rx="4" ry="3" fill="#20201E"/>
     ${patchShape}
+    ${patternOverlaySVG(dog)}
   </svg>`;
 }
 
@@ -1149,12 +1246,13 @@ function createDogRow(dog, opts){
     <input type="text" class="setup-sub" placeholder="ひとこと(任意・例: 3歳、柴犬)" value="${dog ? escapeHtml(dog.sub||'') : ''}">
     <div class="setup-field-label">耳の形</div>
     <div class="setup-styles setup-ears"></div>
-    <div class="setup-field-label">模様</div>
-    <div class="setup-styles setup-marks"></div>
-    <div class="setup-field-label">毛色</div>
+    <div class="setup-field-label">毛色・柄</div>
     <div class="setup-colors"></div>
+    <div class="setup-field-label">追加の模様(自由に組み合わせ可)</div>
+    <div class="setup-toggles"></div>
   `;
 
+  // --- 耳の形(輪郭だけのプレビュー) ---
   const earsWrap = row.querySelector('.setup-ears');
   const currentEarsKey = (dog && dog.ears==='pointy') ? 'pointy' : 'floppy';
   EAR_PRESETS.forEach((ep)=>{
@@ -1162,55 +1260,75 @@ function createDogRow(dog, opts){
     btn.type = 'button';
     btn.className = 'setup-style-btn' + (ep.key===currentEarsKey ? ' sel' : '');
     btn.dataset.ears = ep.key;
-    const previewDog = {coat:'#8A5A2B', ears:ep.ears, mask:false, patch:false};
-    btn.innerHTML = `${dogIconSVG(previewDog,34)}<span class="lbl">${ep.label}</span>`;
+    btn.innerHTML = `${earOnlyIconSVG(ep.ears,34)}<span class="lbl">${ep.label}</span>`;
     btn.onclick = ()=>{
       earsWrap.querySelectorAll('.setup-style-btn').forEach(b=>b.classList.remove('sel'));
       btn.classList.add('sel');
-      refreshMarkPreviews(row);
     };
     earsWrap.appendChild(btn);
   });
 
-  const marksWrap = row.querySelector('.setup-marks');
-  const currentMarkKey = (dog && dog.mask) ? 'mask' : ((dog && dog.patch) ? 'patch' : 'plain');
-  MARK_PRESETS.forEach((mp)=>{
+  // --- 毛色・柄(単色スウォッチと、三毛/ブチの柄入り丸スウォッチを同列
+  //     で1つだけ選ぶ。柄も色と同じ「丸」で表現し、犬のイラストは出さない) ---
+  const colorWrap = row.querySelector('.setup-colors');
+  const currentColorHex = dog ? dog.color : null;
+  const currentPattern = (dog && dog.pattern) || 'solid';
+  const hasExactSolidMatch = currentPattern==='solid' && currentColorHex &&
+    COLOR_OPTIONS.some(c=>c.type==='solid' && c.hex.toLowerCase()===currentColorHex.toLowerCase());
+
+  const optionList = [];
+  if(currentPattern==='solid' && currentColorHex && !hasExactSolidMatch){
+    // Existing dogs created before this palette (or with a custom hex)
+    // keep their original color as a selected first swatch, so opening
+    // the manage screen never silently changes their look.
+    optionList.push({key:'__custom', type:'solid', hex: currentColorHex, label:'現在の色'});
+  }
+  optionList.push(...COLOR_OPTIONS);
+
+  optionList.forEach((c,i)=>{
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'setup-style-btn' + (mp.key===currentMarkKey ? ' sel' : '');
-    btn.dataset.mark = mp.key;
+    let isSel;
+    if(currentPattern !== 'solid'){
+      isSel = (c.type==='pattern' && c.pattern===currentPattern);
+    } else if(currentColorHex){
+      isSel = (c.type==='solid' && c.hex.toLowerCase()===currentColorHex.toLowerCase());
+    } else {
+      isSel = (i===0);
+    }
+    btn.dataset.optionKey = c.key;
+    btn.dataset.type = c.type;
+    btn.title = c.label;
+    if(c.type === 'solid'){
+      btn.className = 'setup-color-swatch' + (isSel ? ' sel' : '');
+      btn.style.background = c.hex;
+      btn.dataset.hex = c.hex;
+    } else {
+      btn.className = 'setup-color-swatch' + (isSel ? ' sel' : '');
+      btn.dataset.pattern = c.pattern;
+      btn.innerHTML = patternSwatchIconSVG(c.pattern, 30);
+    }
     btn.onclick = ()=>{
-      marksWrap.querySelectorAll('.setup-style-btn').forEach(b=>b.classList.remove('sel'));
+      colorWrap.querySelectorAll('.setup-color-swatch').forEach(s=>s.classList.remove('sel'));
       btn.classList.add('sel');
     };
-    marksWrap.appendChild(btn);
+    colorWrap.appendChild(btn);
   });
-  refreshMarkPreviews(row);
 
-  const colorWrap = row.querySelector('.setup-colors');
-  const currentColor = dog ? dog.color : null;
-  const hasExactMatch = currentColor && COLOR_PRESETS.some(c=>c.hex.toLowerCase()===currentColor.toLowerCase());
-  const colorList = [];
-  if(currentColor && !hasExactMatch){
-    // Existing dogs created before the 6-color palette (or with a custom
-    // hex) keep their original color as a selected first swatch, so
-    // opening the manage screen never silently changes their look.
-    colorList.push({hex: currentColor, label:'現在の色'});
-  }
-  colorList.push(...COLOR_PRESETS);
-  colorList.forEach((c,i)=>{
-    const sw = document.createElement('button');
-    sw.type = 'button';
-    const isSel = currentColor ? (c.hex.toLowerCase()===currentColor.toLowerCase()) : (i===0);
-    sw.className = 'setup-color-swatch' + (isSel ? ' sel' : '');
-    sw.style.background = c.hex;
-    sw.title = c.label;
-    sw.dataset.color = c.hex;
-    sw.onclick = ()=>{
-      colorWrap.querySelectorAll('.setup-color-swatch').forEach(s=>s.classList.remove('sel'));
-      sw.classList.add('sel');
-    };
-    colorWrap.appendChild(sw);
+  // --- 追加の模様(マズル黒・胸白):単独ON/OFF。どのカラー/柄とも併用可。
+  //     言葉だけだと伝わりにくいので、耳と同様にグレーの簡易シルエット
+  //     でその模様自体を見せる。 ---
+  const togglesWrap = row.querySelector('.setup-toggles');
+  MARK_TOGGLES.forEach(mt=>{
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    const isOn = dog ? !!dog[mt.prop] : false;
+    btn.className = 'setup-style-btn setup-toggle-btn' + (isOn ? ' sel' : '');
+    btn.dataset.markKey = mt.key;
+    const previewDog = {coat:GRAY, ears:'floppy', mask: mt.prop==='mask', patch: mt.prop==='patch', pattern:'solid'};
+    btn.innerHTML = `${dogIconSVG(previewDog,34)}<span class="lbl">${mt.label}</span>`;
+    btn.onclick = ()=>{ btn.classList.toggle('sel'); };
+    togglesWrap.appendChild(btn);
   });
 
   row.querySelector('.setup-remove').onclick = ()=>{
@@ -1227,20 +1345,6 @@ function createDogRow(dog, opts){
   return row;
 }
 
-// Markings previews (nose mask / chest patch) depend on which ear shape
-// is currently selected in the same row, so they're rebuilt whenever the
-// ear choice changes, keeping the preview consistent with the final icon.
-function refreshMarkPreviews(row){
-  const earsSel = row.querySelector('.setup-ears .setup-style-btn.sel');
-  const earsKey = earsSel ? earsSel.dataset.ears : EAR_PRESETS[0].key;
-  const earsShape = (EAR_PRESETS.find(e=>e.key===earsKey) || EAR_PRESETS[0]).ears;
-  row.querySelectorAll('.setup-marks .setup-style-btn').forEach(btn=>{
-    const mp = MARK_PRESETS.find(m=>m.key===btn.dataset.mark);
-    const previewDog = {coat:'#8A5A2B', ears:earsShape, mask:mp.mask, patch:mp.patch};
-    btn.innerHTML = `${dogIconSVG(previewDog,34)}<span class="lbl">${mp.label}</span>`;
-  });
-}
-
 // Reads one row's form fields back into a plain dog object (without id).
 // Returns null if the name field was left blank, so blank rows are
 // silently skipped by both the setup screen and the manage screen.
@@ -1248,15 +1352,34 @@ function collectDogFromRow(row){
   const name = row.querySelector('.setup-name').value.trim();
   if(!name) return null;
   const sub = row.querySelector('.setup-sub').value.trim();
-  const selSwatch = row.querySelector('.setup-color-swatch.sel');
-  const color = selSwatch ? selSwatch.dataset.color : COLOR_PRESETS[0].hex;
+
   const earsBtn = row.querySelector('.setup-ears .setup-style-btn.sel');
   const earsKey = earsBtn ? earsBtn.dataset.ears : EAR_PRESETS[0].key;
   const ears = (EAR_PRESETS.find(e=>e.key===earsKey) || EAR_PRESETS[0]).ears;
-  const markBtn = row.querySelector('.setup-marks .setup-style-btn.sel');
-  const markKey = markBtn ? markBtn.dataset.mark : MARK_PRESETS[0].key;
-  const mark = MARK_PRESETS.find(m=>m.key===markKey) || MARK_PRESETS[0];
-  return {name, sub, coat:color, color, ears, mask:mark.mask, patch:mark.patch};
+
+  const selColorBtn = row.querySelector('.setup-colors .sel');
+  let pattern = 'solid';
+  let color = COLOR_OPTIONS[0].hex;
+  if(selColorBtn){
+    if(selColorBtn.dataset.type === 'pattern'){
+      pattern = selColorBtn.dataset.pattern;
+      // Accent color used for UI bits (active tab border, name text) —
+      // patterns aren't a single hex, so pick a representative accent.
+      color = (pattern === 'dalmatian') ? GRAY : '#2E2C2A';
+    } else {
+      color = selColorBtn.dataset.hex;
+    }
+  }
+
+  let mask = false, patch = false;
+  row.querySelectorAll('.setup-toggle-btn.sel').forEach(btn=>{
+    const mt = MARK_TOGGLES.find(m=>m.key===btn.dataset.markKey);
+    if(!mt) return;
+    if(mt.prop==='mask') mask = true;
+    if(mt.prop==='patch') patch = true;
+  });
+
+  return {name, sub, coat:color, color, ears, mask, patch, pattern};
 }
 
 function createSetupRow(){
