@@ -470,10 +470,10 @@
 // Built-in defaults — this is what Mo's own browser already has data
 // recorded against, so it must keep working exactly as before.
 const DEFAULT_DOGS = [
-  {id:'chang',  name:'Chang',  coat:'#C68A4E', ears:'pointy', mask:true,  color:'#C68A4E', sub:'15歳・ボクサー'},
-  {id:'carmen', name:'Carmen', coat:'#2E2C2A', ears:'pointy', mask:false, color:'#2E2C2A', sub:'黒い雑種・Mamaより年上'},
-  {id:'mama',   name:'Mama',   coat:'#2E2C2A', ears:'pointy', mask:false, patch:true, color:'#2E2C2A', sub:'黒い雑種・2歳くらい'},
-  {id:'junior', name:'Junior', coat:'#8A5A2B', ears:'pointy', mask:false, color:'#8A5A2B', sub:'茶色い雑種・やんちゃ盛り'},
+  {id:'chang',  name:'Chang',  coat:'#C68A4E', ears:'semi', mask:true,  color:'#C68A4E', sub:'15歳・ボクサー'},
+  {id:'carmen', name:'Carmen', coat:'#2E2C2A', ears:'semi', mask:false, color:'#2E2C2A', sub:'黒い雑種・Mamaより年上'},
+  {id:'mama',   name:'Mama',   coat:'#2E2C2A', ears:'semi', mask:false, patch:true, color:'#2E2C2A', sub:'黒い雑種・2歳くらい'},
+  {id:'junior', name:'Junior', coat:'#8A5A2B', ears:'semi', mask:false, color:'#8A5A2B', sub:'茶色い雑種・やんちゃ盛り'},
 ];
 
 // The actual dog list in use on this browser. Populated by initDogs()
@@ -505,8 +505,9 @@ const COLOR_OPTIONS = [
 
 // 耳の形(色・柄とは独立して選ぶ)
 const EAR_PRESETS = [
-  {key:'floppy', label:'たれ耳', ears:'floppy'},
-  {key:'pointy', label:'立ち耳', ears:'pointy'},
+  {key:'floppy', label:'たれ耳',   ears:'floppy'},
+  {key:'semi',   label:'半立ち耳', ears:'semi'},
+  {key:'pointy', label:'立ち耳',   ears:'pointy'},
 ];
 
 // マズル黒・胸白は単独のON/OFFトグル。単色でも三毛/ダルメシアンでも、
@@ -516,17 +517,22 @@ const MARK_TOGGLES = [
   {key:'patch', label:'胸に白',   prop:'patch'},
 ];
 
-// Ear shape is a selectable trait: 'floppy' (default) or 'pointy'.
+// Ear shape is a selectable trait: 'floppy', 'semi', or 'pointy'.
 // Floppy ears hang down the sides of the face with no silhouette above
-// the head, so from a distance they read as "barely there" — the
-// opposite of pointy ears, which spike upward. That contrast is the
-// whole point of the choice, so it needs to be legible even at small
-// icon sizes.
+// the head, so from a distance they read as "barely there". Pointy ears
+// spike straight up to a sharp apex. 'semi' sits between the two — small
+// and upright at the base like pointy ears, but the tip folds over in a
+// curve instead of coming to a point (rose/tulip ear).
 function earsSVG(dog){
   if(dog.ears === 'pointy'){
     return `
     <path d="M27 32 L15 4 L40 24 Z" fill="${dog.coat}"/>
     <path d="M69 32 L81 4 L56 24 Z" fill="${dog.coat}"/>`;
+  }
+  if(dog.ears === 'semi'){
+    return `
+    <path d="M28 32 Q20 20 22 8 Q28 3 33 9 Q35 16 31 21 Q29 27 28 32 Z" fill="${dog.coat}"/>
+    <path d="M68 32 Q76 20 74 8 Q68 3 63 9 Q61 16 65 21 Q67 27 68 32 Z" fill="${dog.coat}"/>`;
   }
   return `
     <path d="M28 26 Q14 34 17 54 Q22 62 29 58 Q26 42 33 30 Z" fill="${dog.coat}"/>
@@ -1254,7 +1260,9 @@ function createDogRow(dog, opts){
 
   // --- 耳の形(輪郭だけのプレビュー) ---
   const earsWrap = row.querySelector('.setup-ears');
-  const currentEarsKey = (dog && dog.ears==='pointy') ? 'pointy' : 'floppy';
+  const currentEarsKey = (dog && dog.ears==='pointy') ? 'pointy'
+    : (dog && dog.ears==='semi') ? 'semi'
+    : 'floppy';
   EAR_PRESETS.forEach((ep)=>{
     const btn = document.createElement('button');
     btn.type = 'button';
