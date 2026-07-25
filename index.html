@@ -512,9 +512,15 @@ const EAR_PRESETS = [
 
 // マズル黒・胸白は単独のON/OFFトグル。単色でも三毛/ダルメシアンでも、
 // どのカラーとも自由に組み合わせられる(排他選択ではない)。
+// ハチワレの2色(黄土色/グレー)は同じ頭の位置に描くので、両方同時に
+// ONにする意味がない → exclusiveWith で片方を選ぶともう片方は自動OFF。
+// previewCoat はこのトグル単体のプレビューアイコンの下地色(未指定なら
+// GRAY)。ハチワレはクリーム顔が前提の柄なのでプレビューもクリームに。
 const MARK_TOGGLES = [
   {key:'mask',  label:'マズル黒', prop:'mask'},
   {key:'patch', label:'胸に白',   prop:'patch'},
+  {key:'hachi-ocher', label:'ハチワレ(黄土色)', prop:'hachiOcher', previewCoat: CREAM, exclusiveWith:'hachiGray'},
+  {key:'hachi-gray',  label:'ハチワレ(グレー)', prop:'hachiGray',  previewCoat: CREAM, exclusiveWith:'hachiOcher'},
 ];
 
 // Ear shape is a selectable trait: 'floppy', 'semi', or 'pointy'.
@@ -636,6 +642,16 @@ function patternOverlaySVG(dog, clipId){
 // a cream base plus painted-on markings instead. `ears` picks the ear
 // shape; `mask` adds a boxer-style dark muzzle; `patch` adds a small
 // chest marking — both only apply when pattern is 'solid'.
+// "ハチワレ" — colored cap over both ears + top of the head, dipping down
+// to a V-notch between the eyes so the lower face/muzzle keeps showing
+// the base coat underneath. Named after the "八" (hachi) shape the split
+// makes. Looks best paired with a cream base coat (beagle/collie-ish in
+// 黄土色, husky-ish in gray) but the shape itself doesn't force that —
+// it just layers on top like マズル黒/胸白 do.
+function hachiwareShapeSVG(fill){
+  return `<path d="M28 30 Q30 14 48 14 Q66 14 68 30 Q60 21 54 33 Q48 41 42 33 Q36 21 28 30 Z" fill="${fill}"/>`;
+}
+
 let _iconIdCounter = 0; // keeps each icon's <clipPath> id unique when several dog icons render on the same page at once (dog list, header, swatches)
 
 function dogIconSVG(dog, size){
@@ -644,14 +660,23 @@ function dogIconSVG(dog, size){
   const baseCoat = pattern === 'solid' ? dog.coat : (pattern === 'dalmatian' ? GRAY : CREAM);
   const maskShape = dog.mask ? `<ellipse cx="50" cy="40" rx="13" ry="10" fill="#2E2C2A" opacity="0.85"/>` : '';
   const patchShape = dog.patch ? `<ellipse cx="46" cy="60" rx="7" ry="9" fill="#F5EFE3" opacity="0.9"/>` : '';
+  // Hachiware colors both the cap (forehead, drawn via hachiwareShapeSVG)
+  // AND the ears — together they read as "outside = colored, inside/
+  // muzzle = base coat", matching the real marking. Ears alone used to
+  // stay baseCoat-colored (cream), which looked disconnected from the
+  // colored cap since the ear shapes sit outside the cap's outline.
+  const hachiColor = dog.hachiOcher ? '#B8863E' : (dog.hachiGray ? GRAY : null);
+  const earColor = hachiColor || baseCoat;
+  const hachiShape = hachiColor ? hachiwareShapeSVG(hachiColor) : '';
   const clipId = 'bodyClip' + (++_iconIdCounter);
   return `
   <svg class="icon" width="${s}" height="${s}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
     <defs><clipPath id="${clipId}">${bodyShapesSVG('#000')}</clipPath></defs>
     ${bodyShapesSVG(baseCoat)}
     <circle cx="48" cy="38" r="20" fill="${baseCoat}"/>
-    ${earsSVG({...dog, coat: baseCoat})}
+    ${earsSVG({...dog, coat: earColor})}
     ${maskShape}
+    ${hachiShape}
     <circle cx="40" cy="36" r="2.4" fill="#20201E"/>
     <circle cx="56" cy="36" r="2.4" fill="#20201E"/>
     <ellipse cx="48" cy="46" rx="4" ry="3" fill="#20201E"/>
@@ -1355,9 +1380,17 @@ function createDogRow(dog, opts){
     const isOn = dog ? !!dog[mt.prop] : false;
     btn.className = 'setup-style-btn setup-toggle-btn' + (isOn ? ' sel' : '');
     btn.dataset.markKey = mt.key;
-    const previewDog = {coat:GRAY, ears:'floppy', mask: mt.prop==='mask', patch: mt.prop==='patch', pattern:'solid'};
+    const previewDog = {coat: mt.previewCoat || GRAY, ears:'floppy', [mt.prop]: true, pattern:'solid'};
     btn.innerHTML = `${dogIconSVG(previewDog,34)}<span class="lbl">${mt.label}</span>`;
-    btn.onclick = ()=>{ btn.classList.toggle('sel'); };
+    btn.onclick = ()=>{
+      const turningOn = !btn.classList.contains('sel');
+      btn.classList.toggle('sel');
+      if(turningOn && mt.exclusiveWith){
+        const other = MARK_TOGGLES.find(m=>m.prop===mt.exclusiveWith);
+        const otherBtn = other && togglesWrap.querySelector(`[data-mark-key="${other.key}"]`);
+        if(otherBtn) otherBtn.classList.remove('sel');
+      }
+    };
     togglesWrap.appendChild(btn);
   });
 
@@ -1401,15 +1434,15 @@ function collectDogFromRow(row){
     }
   }
 
-  let mask = false, patch = false;
+  const marks = {};
   row.querySelectorAll('.setup-toggle-btn.sel').forEach(btn=>{
     const mt = MARK_TOGGLES.find(m=>m.key===btn.dataset.markKey);
-    if(!mt) return;
-    if(mt.prop==='mask') mask = true;
-    if(mt.prop==='patch') patch = true;
+    if(mt) marks[mt.prop] = true;
   });
+  const mask = !!marks.mask, patch = !!marks.patch;
+  const hachiOcher = !!marks.hachiOcher, hachiGray = !!marks.hachiGray;
 
-  return {name, sub, coat:color, color, ears, mask, patch, pattern};
+  return {name, sub, coat:color, color, ears, mask, patch, hachiOcher, hachiGray, pattern};
 }
 
 function createSetupRow(){
