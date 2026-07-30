@@ -624,14 +624,20 @@ function patternOverlaySVG(dog, clipId){
     </g>`;
   }
   if(dog.pattern === 'tricolor'){
-    // One big patch per color instead of a scattered cluster of small
-    // dots — clip-path (body silhouette only, no head) crops each patch
-    // to the body outline automatically, so they can be drawn oversized
+    // Irregular, jagged "camouflage-style" blotches instead of plain
+    // circles — each color is a hand-drawn organic path (not a perfect
+    // curve) with a couple of smaller interlocking accent patches, so
+    // it reads as camo-style patchwork rather than polka dots.
+    // clip-path (body silhouette only, no head) crops every patch to
+    // the body outline automatically, so they can be drawn oversized
     // without spilling onto the face or floating outside the dog.
     return `<g clip-path="url(#${clipId})">
-    <circle cx="74" cy="58" r="20" fill="#2E2C2A"/>
-    <circle cx="24" cy="78" r="13" fill="#9A6B3A"/>
-    <circle cx="60" cy="82" r="10" fill="#2E2C2A"/>
+    <path d="M60 40 Q78 30 91 41 Q99 54 89 65 Q94 76 78 77 Q63 79 59 66 Q53 53 60 40 Z" fill="#2E2C2A"/>
+    <path d="M72 47 Q79 43 85 49 Q84 57 75 56 Q70 52 72 47 Z" fill="#9A6B3A"/>
+    <path d="M13 67 Q9 78 16 89 Q25 97 35 90 Q41 83 34 75 Q27 65 13 67 Z" fill="#9A6B3A"/>
+    <ellipse cx="29" cy="70" rx="4" ry="3.2" fill="#2E2C2A"/>
+    <path d="M49 73 Q45 84 53 93 Q62 97 68 88 Q70 79 61 75 Q55 71 49 73 Z" fill="#2E2C2A"/>
+    <ellipse cx="63" cy="80" rx="3.4" ry="2.8" fill="#9A6B3A"/>
     </g>`;
   }
   return '';
@@ -658,7 +664,7 @@ function dogIconSVG(dog, size){
   const s = size || 34;
   const pattern = dog.pattern || 'solid';
   const baseCoat = pattern === 'solid' ? dog.coat : (pattern === 'dalmatian' ? GRAY : CREAM);
-  const maskShape = dog.mask ? `<ellipse cx="50" cy="40" rx="13" ry="10" fill="#2E2C2A" opacity="0.85"/>` : '';
+  const maskShape = dog.mask ? `<ellipse cx="50" cy="40" rx="13" ry="10" fill="#808080" opacity="1"/>` : '';
   const patchShape = dog.patch ? `<ellipse cx="46" cy="60" rx="7" ry="9" fill="#F5EFE3" opacity="0.9"/>` : '';
   // Hachiware colors both the cap (forehead, drawn via hachiwareShapeSVG)
   // AND the ears — together they read as "outside = colored, inside/
@@ -1569,19 +1575,4 @@ window.addEventListener('pageshow', ()=>{
 });
 
 </script>
-<a href="https://forms.gle/s97kzuBfatnangPs5" target="_blank" rel="noopener" style="
-  position:fixed;
-  bottom:16px;
-  right:16px;
-  background-color:#ff8fab;
-  color:#fff;
-  padding:10px 16px;
-  border-radius:24px;
-  text-decoration:none;
-  font-family:'Inter',sans-serif;
-  font-size:13px;
-  font-weight:600;
-  box-shadow:0 2px 8px rgba(0,0,0,.25);
-  z-index:40;
-">📝 ご意見はこちら</a>
 </body></html>
