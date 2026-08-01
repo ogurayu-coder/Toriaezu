@@ -624,22 +624,28 @@ function patternOverlaySVG(dog, clipId){
     </g>`;
   }
   if(dog.pattern === 'tricolor'){
-    // Finer-grained camouflage-style texture — more, smaller irregular
-    // blotches instead of a few large ones, interlacing the two colors
-    // across the body so it reads as camo texture rather than a few big
-    // splotches. clip-path (body silhouette only, no head) crops every
-    // patch to the body outline automatically.
+    // Finer-grained camouflage-style texture, with denser coverage so
+    // less of the cream base peeks through between patches — still
+    // irregular hand-drawn blotches (not solid fill), just packed
+    // closer together across the torso as well as the legs/tail.
+    // clip-path (body silhouette only, no head) crops every patch to
+    // the body outline automatically.
     return `<g clip-path="url(#${clipId})">
     <path d="M58 38 Q68 33 75 40 Q77 47 69 49 Q61 49 58 43 Z" fill="#2E2C2A"/>
     <path d="M78 44 Q86 41 91 48 Q92 55 84 56 Q78 53 78 44 Z" fill="#9A6B3A"/>
     <path d="M84 58 Q92 56 94 64 Q93 71 85 70 Q80 66 84 58 Z" fill="#2E2C2A"/>
     <path d="M66 55 Q73 52 77 58 Q76 64 69 63 Q64 60 66 55 Z" fill="#9A6B3A"/>
-    <ellipse cx="74" cy="70" rx="5.5" ry="4.5" fill="#2E2C2A"/>
+    <ellipse cx="74" cy="70" rx="6.2" ry="5.2" fill="#2E2C2A"/>
     <path d="M13 67 Q9 75 14 82 Q21 87 28 82 Q31 76 25 71 Q19 65 13 67 Z" fill="#9A6B3A"/>
-    <ellipse cx="30" cy="86" rx="5" ry="4.2" fill="#2E2C2A"/>
+    <ellipse cx="30" cy="86" rx="5.8" ry="4.8" fill="#2E2C2A"/>
     <path d="M47 71 Q41 73 41 80 Q45 86 52 84 Q56 79 51 74 Z" fill="#2E2C2A"/>
-    <ellipse cx="58" cy="83" rx="4.6" ry="3.8" fill="#9A6B3A"/>
+    <ellipse cx="58" cy="83" rx="5.2" ry="4.4" fill="#9A6B3A"/>
     <path d="M64 88 Q60 92 64 97 Q70 99 73 94 Q72 90 64 88 Z" fill="#9A6B3A"/>
+    <path d="M30 40 Q40 34 48 40 Q50 48 42 50 Q33 50 30 44 Z" fill="#9A6B3A"/>
+    <path d="M45 44 Q54 40 60 46 Q59 53 51 52 Q46 49 45 44 Z" fill="#2E2C2A"/>
+    <ellipse cx="24" cy="55" rx="6.2" ry="5.2" fill="#2E2C2A"/>
+    <path d="M33 58 Q28 62 31 69 Q37 73 42 68 Q43 62 38 59 Z" fill="#9A6B3A"/>
+    <ellipse cx="50" cy="60" rx="5.8" ry="4.8" fill="#9A6B3A"/>
     </g>`;
   }
   return '';
