@@ -502,6 +502,7 @@ const COLOR_OPTIONS = [
   {key:'brown',     type:'solid',   hex:'#7A4A24',    label:'茶色'},
   {key:'tricolor',  type:'pattern', pattern:'tricolor',  label:'三毛'},
   {key:'dalmatian', type:'pattern', pattern:'dalmatian', label:'ブチ'},
+  {key:'graypatch', type:'pattern', pattern:'graypatch', label:'グレーぶち'},
 ];
 
 // 耳の形(色・柄とは独立して選ぶ)
@@ -579,6 +580,19 @@ function patternSwatchIconSVG(patternKey, size){
       <circle cx="6" cy="8" r="2.3" fill="#9A6B3A"/>
     </svg>`;
   }
+  if(patternKey === 'graypatch'){
+    // Same cream-base "camo blotch" idea as tricolor, but a single gray
+    // ink and a different scatter of dots — keeps it visually distinct
+    // from tricolor at a glance rather than reading as "tricolor minus
+    // the brown".
+    return `<svg width="${s}" height="${s}" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="15" cy="15" r="15" fill="${CREAM}"/>
+      <circle cx="9" cy="8" r="3.4" fill="${GRAY}"/>
+      <circle cx="22" cy="11" r="2.6" fill="${GRAY}"/>
+      <circle cx="12" cy="21" r="3" fill="${GRAY}"/>
+      <circle cx="23" cy="23" r="2.2" fill="${GRAY}"/>
+    </svg>`;
+  }
   return '';
 }
 
@@ -642,11 +656,33 @@ function patternOverlaySVG(dog, clipId){
     <path d="M47 71 Q41 73 41 80 Q45 86 52 84 Q56 79 51 74 Z" fill="#2E2C2A"/>
     <ellipse cx="58" cy="83" rx="5.2" ry="4.4" fill="#9A6B3A"/>
     <path d="M64 88 Q60 92 64 97 Q70 99 73 94 Q72 90 64 88 Z" fill="#9A6B3A"/>
-    <path d="M30 40 Q40 34 48 40 Q50 48 42 50 Q33 50 30 44 Z" fill="#9A6B3A"/>
-    <path d="M45 44 Q54 40 60 46 Q59 53 51 52 Q46 49 45 44 Z" fill="#2E2C2A"/>
+    <path d="M22 46 Q32 40 40 46 Q42 54 34 56 Q25 56 22 50 Z" fill="#9A6B3A"/>
+    <path d="M16 44 Q24 39 30 45 Q31 52 24 53 Q17 51 16 44 Z" fill="#2E2C2A"/>
     <ellipse cx="24" cy="55" rx="6.2" ry="5.2" fill="#2E2C2A"/>
     <path d="M33 58 Q28 62 31 69 Q37 73 42 68 Q43 62 38 59 Z" fill="#9A6B3A"/>
     <ellipse cx="50" cy="60" rx="5.8" ry="4.8" fill="#9A6B3A"/>
+    </g>`;
+  }
+  if(dog.pattern === 'graypatch'){
+    // Same camo-blotch technique as tricolor, mirrored left-right and
+    // in a single gray ink, so it reads as a clearly different coat
+    // rather than "tricolor with the brown removed".
+    return `<g clip-path="url(#${clipId})">
+    <path d="M42 38 Q32 33 25 40 Q23 47 31 49 Q39 49 42 43 Z" fill="${GRAY}"/>
+    <path d="M22 44 Q14 41 9 48 Q8 55 16 56 Q22 53 22 44 Z" fill="${GRAY}"/>
+    <path d="M16 58 Q8 56 6 64 Q7 71 15 70 Q20 66 16 58 Z" fill="${GRAY}"/>
+    <path d="M34 55 Q27 52 23 58 Q24 64 31 63 Q36 60 34 55 Z" fill="${GRAY}"/>
+    <ellipse cx="26" cy="70" rx="6.2" ry="5.2" fill="${GRAY}"/>
+    <path d="M87 67 Q91 75 86 82 Q79 87 72 82 Q69 76 75 71 Q81 65 87 67 Z" fill="${GRAY}"/>
+    <ellipse cx="70" cy="86" rx="5.8" ry="4.8" fill="${GRAY}"/>
+    <path d="M53 71 Q59 73 59 80 Q55 86 48 84 Q44 79 49 74 Z" fill="${GRAY}"/>
+    <ellipse cx="42" cy="83" rx="5.2" ry="4.4" fill="${GRAY}"/>
+    <path d="M36 88 Q40 92 36 97 Q30 99 27 94 Q28 90 36 88 Z" fill="${GRAY}"/>
+    <path d="M78 46 Q68 40 60 46 Q58 54 66 56 Q75 56 78 50 Z" fill="${GRAY}"/>
+    <path d="M84 44 Q76 39 70 45 Q69 52 76 53 Q83 51 84 44 Z" fill="${GRAY}"/>
+    <ellipse cx="76" cy="55" rx="6.2" ry="5.2" fill="${GRAY}"/>
+    <path d="M67 58 Q72 62 69 69 Q63 73 58 68 Q57 62 62 59 Z" fill="${GRAY}"/>
+    <ellipse cx="50" cy="60" rx="5.8" ry="4.8" fill="${GRAY}"/>
     </g>`;
   }
   return '';
@@ -1448,7 +1484,7 @@ function collectDogFromRow(row){
       pattern = selColorBtn.dataset.pattern;
       // Accent color used for UI bits (active tab border, name text) —
       // patterns aren't a single hex, so pick a representative accent.
-      color = (pattern === 'dalmatian') ? GRAY : '#2E2C2A';
+      color = (pattern === 'dalmatian' || pattern === 'graypatch') ? GRAY : '#2E2C2A';
     } else {
       color = selColorBtn.dataset.hex;
     }
