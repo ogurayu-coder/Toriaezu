@@ -714,7 +714,7 @@ function dogIconSVG(dog, size){
   const s = size || 34;
   const pattern = dog.pattern || 'solid';
   const baseCoat = pattern === 'solid' ? dog.coat : (pattern === 'dalmatian' ? GRAY : CREAM);
-  const maskShape = dog.mask ? `<ellipse cx="50" cy="40" rx="13" ry="10" fill="#808080" opacity="1"/>` : '';
+  const maskShape = dog.mask ? `<ellipse cx="50" cy="40" rx="13" ry="10" fill="#565452" opacity="1"/>` : '';
   const patchShape = dog.patch ? `<ellipse cx="46" cy="60" rx="7" ry="9" fill="#F5EFE3" opacity="0.9"/>` : '';
   // Hachiware colors both the cap (forehead, drawn via hachiwareShapeSVG)
   // AND the ears — together they read as "outside = colored, inside/
