@@ -360,7 +360,7 @@
       <button id="langToggleBtnSetup" onclick="toggleLang()" style="font-size:12px;font-weight:700;padding:5px 10px;border-radius:20px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;">🇲🇽 ES(β)</button>
     </div>
     <h1 data-i18n="setupTitle">🐾 わんこノートへようこそ</h1>
-    <p class="lead" data-i18n="setupLead">記録するワンちゃんを登録してください。名前と色を選ぶだけです(あとから「はじめる」を押す前なら何匹でも追加・削除できます)。</p>
+    <p class="lead" data-i18n="setupLead">記録するワンちゃんを登録してください。名前と色を選ぶだけです。</p>
     <p class="lead" data-i18n-html="setupIphoneWarn" style="background:#fff3f5;border:1px solid #ffd4dc;border-radius:10px;padding:10px 12px;">📱 <strong>この画面が2回目以降も出る場合:</strong> Safariで直接開いた時と、ホーム画面のアイコンから開いた時ではデータが別々に保存されます(iPhoneの仕様です)。必ず<strong>いつも同じ方法</strong>で開くようにしてください。おすすめはホーム画面にアイコンを追加して、そこから開く方法です。</p>
     <div id="setupDogList"></div>
     <button class="setup-add" id="setupAddDog" data-i18n="addDogBtn">＋ ワンちゃんを追加</button>
@@ -1160,7 +1160,7 @@ let LANG = localStorage.getItem(LANG_KEY) || 'ja';
 const I18N = {
   ja: {
     setupTitle: '🐾 わんこノートへようこそ',
-    setupLead: '記録するワンちゃんを登録してください。名前と色を選ぶだけです(あとから「はじめる」を押す前なら何匹でも追加・削除できます)。',
+    setupLead: '記録するワンちゃんを登録してください。名前と色を選ぶだけです。',
     setupIphoneWarn: '📱 <strong>この画面が2回目以降も出る場合:</strong> Safariで直接開いた時と、ホーム画面のアイコンから開いた時ではデータが別々に保存されます(iPhoneの仕様です)。必ず<strong>いつも同じ方法</strong>で開くようにしてください。おすすめはホーム画面にアイコンを追加して、そこから開く方法です。',
     addDogBtn: '＋ ワンちゃんを追加',
     startBtn: 'はじめる',
@@ -1179,10 +1179,16 @@ const I18N = {
     manageDesc: '名前・見た目の編集、追加、削除ができます。「キャンセル」を押せば何も変更されません。削除も「保存する」を押すまでは確定しないので、安心して試せます。',
     cancelBtn: 'キャンセル',
     saveBtn: '保存する',
+    namePlaceholder: '名前(例: ポチ)',
+    subPlaceholder: 'ひとこと(任意・例: 3歳、柴犬)',
+    deleteTitle: '削除',
+    earsLabel: '耳の形',
+    colorLabel: '毛色・柄',
+    extraLabel: '追加の模様(自由に組み合わせ可)',
   },
   es: {
     setupTitle: '🐾 ¡Bienvenido a Wanko Note!',
-    setupLead: 'Registra los perritos que quieras llevar el control. Solo elige un nombre y un color (puedes agregar o quitar los que quieras antes de presionar "Empezar").',
+    setupLead: 'Registra los perritos que quieras llevar el control. Solo elige un nombre y un color.',
     setupIphoneWarn: '📱 <strong>Si esta pantalla aparece de nuevo cada vez:</strong> en iPhone, los datos se guardan por separado según abras la app desde Safari o desde el ícono en la pantalla de inicio. Usa siempre <strong>la misma forma</strong> de abrirla. Se recomienda agregar el ícono a la pantalla de inicio y abrirlo siempre desde ahí.',
     addDogBtn: '＋ Agregar perrito',
     startBtn: 'Empezar',
@@ -1201,6 +1207,12 @@ const I18N = {
     manageDesc: 'Puedes editar nombre y apariencia, agregar o borrar perritos. Si presionas "Cancelar", no se guardará ningún cambio. Los borrados tampoco son definitivos hasta presionar "Guardar", así que puedes probar con confianza.',
     cancelBtn: 'Cancelar',
     saveBtn: 'Guardar',
+    namePlaceholder: 'Nombre (ej: Firulais)',
+    subPlaceholder: 'Nota breve (opcional, ej: 3 años)',
+    deleteTitle: 'Eliminar',
+    earsLabel: 'Orejitas',
+    colorLabel: 'Color',
+    extraLabel: 'Opciones',
   },
 };
 
@@ -1445,15 +1457,15 @@ function createDogRow(dog, opts){
   row.dataset.existingId = (dog && dog.id) ? dog.id : '';
   row.innerHTML = `
     <div class="setup-row-top">
-      <input type="text" class="setup-name" placeholder="名前(例: ポチ)" value="${dog ? escapeHtml(dog.name||'') : ''}">
-      <button type="button" class="setup-remove" title="削除">${opts.showDelete ? '🗑' : '✕'}</button>
+      <input type="text" class="setup-name" placeholder="${t('namePlaceholder')}" value="${dog ? escapeHtml(dog.name||'') : ''}">
+      <button type="button" class="setup-remove" title="${t('deleteTitle')}">${opts.showDelete ? '🗑' : '✕'}</button>
     </div>
-    <input type="text" class="setup-sub" placeholder="ひとこと(任意・例: 3歳、柴犬)" value="${dog ? escapeHtml(dog.sub||'') : ''}">
-    <div class="setup-field-label">耳の形</div>
+    <input type="text" class="setup-sub" placeholder="${t('subPlaceholder')}" value="${dog ? escapeHtml(dog.sub||'') : ''}">
+    <div class="setup-field-label">${t('earsLabel')}</div>
     <div class="setup-styles setup-ears"></div>
-    <div class="setup-field-label">毛色・柄</div>
+    <div class="setup-field-label">${t('colorLabel')}</div>
     <div class="setup-colors"></div>
-    <div class="setup-field-label">追加の模様(自由に組み合わせ可)</div>
+    <div class="setup-field-label">${t('extraLabel')}</div>
     <div class="setup-toggles"></div>
   `;
 
@@ -1467,7 +1479,7 @@ function createDogRow(dog, opts){
     btn.type = 'button';
     btn.className = 'setup-style-btn' + (ep.key===currentEarsKey ? ' sel' : '');
     btn.dataset.ears = ep.key;
-    btn.innerHTML = `${earOnlyIconSVG(ep.ears,34)}<span class="lbl">${ep.label}</span>`;
+    btn.innerHTML = `${earOnlyIconSVG(ep.ears,34)}<span class="lbl">${LANG === 'ja' ? ep.label : ''}</span>`;
     btn.onclick = ()=>{
       earsWrap.querySelectorAll('.setup-style-btn').forEach(b=>b.classList.remove('sel'));
       btn.classList.add('sel');
