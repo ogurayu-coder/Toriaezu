@@ -180,6 +180,11 @@
     display:flex;align-items:flex-end;justify-content:center;
     z-index:50;opacity:0;pointer-events:none;transition:opacity .2s ease;
   }
+  /* 記録入力シート(#overlay)は、カレンダー詳細(#dayOverlay)の "上から" 開く
+     ことがあるため、同じz-index:50だとDOM順で先に来る#overlayが後ろに
+     隠れてしまっていた(操作しても何も起きないように見えるバグの原因)。
+     常に最前面に出したいので個別に高いz-indexを指定する。 */
+  #overlay{ z-index:60; }
   .overlay.show{opacity:1;pointer-events:auto;}
   .sheet{
     background:var(--paper);
