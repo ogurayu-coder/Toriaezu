@@ -62,12 +62,13 @@
     min-width:78px;
     padding:14px 10px 10px;
     border-radius:14px;
-    background:var(--card);
-    border:2px solid var(--line);
+    background:#ECE9E1;
+    border:2px solid #E3DFD3;
     text-align:center;
     cursor:pointer;
-    transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+    transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease, opacity .18s ease;
     font-family:'Baloo 2',sans-serif;
+    opacity:.8;
   }
   .tag::before{
     content:'';
@@ -79,18 +80,21 @@
     height:12px;
     border-radius:50%;
     background:var(--paper);
-    border:2px solid var(--line);
+    border:2px solid #E3DFD3;
     transition:border-color .18s ease;
   }
-  .tag .icon{display:block;margin:0 auto 4px;width:34px;height:34px;}
-  .tag .name{font-size:14px;font-weight:600;color:var(--ink-soft);}
+  .tag .icon{display:block;margin:0 auto 4px;width:34px;height:34px;opacity:.65;transition:opacity .18s ease;}
+  .tag .name{font-size:14px;font-weight:600;color:#B7B3A6;transition:color .18s ease;}
   .tag.active{
+    background:var(--card);
+    opacity:1;
     transform:translateY(-4px) scale(1.04);
     box-shadow:0 6px 14px rgba(43,58,42,.15);
   }
   .tag.active::before{border-color:var(--dogcolor);}
   .tag.active{border-color:var(--dogcolor);}
   .tag.active .name{color:var(--ink);}
+  .tag.active .icon{opacity:1;}
 
   main{padding:18px;max-width:640px;margin:0 auto;}
 
@@ -752,6 +756,42 @@ const TYPES = {
   note: {label:'気になったこと', icon:'📝', color:'var(--note)', chips:[]},
 };
 
+// 種別ラベルとチップ(完食・硬めなど)のスペイン語訳。
+// これらは固定の選択肢(自由記述メモとは違う)なので、翻訳APIを呼ばず
+// 単純な対訳辞書で表示だけ切り替える。保存されるデータ(e.chip)は常に
+// 上のTYPES(日本語)のテキストのままにして、言語を切り替えても記録が
+// 壊れたり検索できなくなったりしないようにする。
+const TYPE_LABEL_ES = {
+  meal: 'Comida',
+  walk: 'Paseo',
+  poop: 'Popó',
+  med: 'Medicina',
+  note: 'Observación',
+};
+const CHIP_ES_MAP = {
+  meal: {'完食':'Comió todo','少し残した':'Dejó un poco','半分':'Comió la mitad','食べず':'No comió'},
+  walk: {'近所ひと回り':'Vuelta al barrio','長め':'Paseo largo','元気いっぱい':'Muy enérgico','疲れ気味':'Algo cansado'},
+  poop: {'普通':'Normal','やわらかめ':'Blanda','硬め':'Dura','下痢':'Diarrea','血が混じる':'Con sangre'},
+  med: {},
+  note: {},
+};
+
+// 種別ラベル(ごはん/Comida等)を現在の言語で返す
+function typeLabel(typeKey){
+  const ty = TYPES[typeKey];
+  if(!ty) return typeKey;
+  return (LANG==='es' && TYPE_LABEL_ES[typeKey]) ? TYPE_LABEL_ES[typeKey] : ty.label;
+}
+// チップ(完食/硬め等)を現在の言語で返す。マップに無ければ原文のまま。
+function chipLabel(typeKey, chipText){
+  if(!chipText) return chipText;
+  if(LANG==='es'){
+    const map = CHIP_ES_MAP[typeKey];
+    if(map && map[chipText]) return map[chipText];
+  }
+  return chipText;
+}
+
 let activeDog = null;
 let logs = {}; // {dogId: [entries]}
 let pendingType = null;
@@ -864,7 +904,7 @@ function renderTimeline(){
         row.innerHTML = `
           <div class="ic">${t.icon}</div>
           <div class="body">
-            <div class="time">${time} ・ <b style="color:${dog.color}">${dog.name}</b> ・ ${t.label}${e.chip? ' ・ '+e.chip:''}</div>
+            <div class="time">${time} ・ <b style="color:${dog.color}">${dog.name}</b> ・ ${typeLabel(e.type)}${e.chip? ' ・ '+chipLabel(e.type, e.chip):''}</div>
             ${e.text? `<div class="text">${escapeHtml(e.text)}</div>` : ''}
           </div>
         `;
@@ -899,7 +939,7 @@ function renderTimeline(){
       row.innerHTML = `
         <div class="ic">${t.icon}</div>
         <div class="body">
-          <div class="time">${time} ・ ${t.label}${e.chip? ' ・ '+e.chip:''}</div>
+          <div class="time">${time} ・ ${typeLabel(e.type)}${e.chip? ' ・ '+chipLabel(e.type, e.chip):''}</div>
           ${e.text? `<div class="text">${escapeHtml(e.text)}</div>` : ''}
         </div>
         <button class="del" data-id="${e.id}">✕</button>
@@ -1041,7 +1081,7 @@ function renderDayEntries(dateStr){
     row.innerHTML = `
       <div class="ic">${t.icon}</div>
       <div class="body">
-        <div class="time">${time} ・ ${t.label}${e.chip? ' ・ '+e.chip:''}</div>
+        <div class="time">${time} ・ ${typeLabel(e.type)}${e.chip? ' ・ '+chipLabel(e.type, e.chip):''}</div>
         ${e.text? `<div class="text">${escapeHtml(e.text)}</div>` : ''}
         ${(e.text && LANG==='es')? `<div class="text-es" data-text="${escapeHtml(e.text)}" style="color:var(--ink-soft);font-size:12px;margin-top:2px;">🇲🇽 …</div>` : ''}
       </div>
@@ -1081,7 +1121,7 @@ function openDayDetail(dateStr){
     const t = TYPES[key];
     const btn = document.createElement('button');
     btn.className = `qbtn ${key}`;
-    btn.innerHTML = `<span class="ic">${t.icon}</span>${t.label}`;
+    btn.innerHTML = `<span class="ic">${t.icon}</span>${typeLabel(key)}`;
     btn.onclick = ()=> openSheet(key, dateStr);
     qwrap.appendChild(btn);
   });
@@ -1105,7 +1145,7 @@ function openSheet(type, dateOverride){
   pendingDate = dateOverride || todayStr();
   const t = TYPES[type];
   $('sheetIcon').textContent = t.icon;
-  $('sheetTitle').textContent = t.label + 'を記録' + (pendingDate!==todayStr() ? `(${fmtDayLabel(pendingDate)})` : '');
+  $('sheetTitle').textContent = (LANG==='es' ? ('Registrar: ' + typeLabel(type)) : (t.label + 'を記録')) + (pendingDate!==todayStr() ? `(${fmtDayLabel(pendingDate)})` : '');
   const now = new Date();
   $('entryTime').value = now.toTimeString().slice(0,5);
   $('entryText').value = '';
@@ -1115,7 +1155,7 @@ function openSheet(type, dateOverride){
   t.chips.forEach(c=>{
     const chip = document.createElement('div');
     chip.className='chip';
-    chip.textContent = c;
+    chip.textContent = chipLabel(type, c); // 表示のみ翻訳。保存はcの日本語原文のまま
     chip.style.setProperty('--c', t.color);
     chip.onclick = ()=>{
       const already = chip.classList.contains('sel');
