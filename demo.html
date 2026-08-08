@@ -942,6 +942,24 @@ function renderAll(){
 
 /* ---------- Calendar ---------- */
 
+// カレンダーの吹き出しをスペイン語訳(先頭5文字)に差し替える。
+// 辞書/キャッシュにあれば即座に反映、なければ「…」を表示しつつAPIを呼ぶ。
+// 月を切り替えた後に古い翻訳結果が誤って別の日付欄に書き込まれないよう、
+// 要素がまだDOMに存在するか確認してから反映する。
+async function updateCalSnippetEs(snippetEl, jaText){
+  if(!snippetEl) return;
+  const trimmed = (jaText||'').trim();
+  const dict = loadEsDict();
+  const cache = loadTranslateCache();
+  if(dict[trimmed]){ snippetEl.textContent = dict[trimmed].slice(0,5); return; }
+  if(cache[trimmed]){ snippetEl.textContent = cache[trimmed].slice(0,5); return; }
+
+  snippetEl.textContent = '···';
+  const {text} = await translateJaToEs(jaText);
+  if(!document.body.contains(snippetEl)) return; // 月送り等で既に消えている
+  snippetEl.textContent = text ? text.slice(0,5) : jaText.slice(0,3);
+}
+
 function renderCalendar(){
   const grid = $('calendarGrid');
   const y = calState.year, m = calState.month;
@@ -970,7 +988,9 @@ function renderCalendar(){
     const entries = (logs[activeDog]||[]).filter(e=>e.at.slice(0,10)===dateStr);
     const noteEntries = entries.filter(e=>e.type==='note' && e.text);
     const hasNote = noteEntries.length>0;
-    const snippet = hasNote ? escapeHtml(noteEntries[0].text.slice(0,3)) : '';
+    // 日本語モードは原文の頭3文字、スペイン語モードは訳文の頭5文字
+    // (「no com」のように単語の途中で切れても、開けば全文が見える)
+    const snippet = hasNote ? escapeHtml(noteEntries[0].text.slice(0, LANG==='es'?5:3)) : '';
 
     const el = document.createElement('div');
     el.className = 'cal-day' + (dateStr===today?' today':'') + (hasNote?' has-note':'');
@@ -980,6 +1000,10 @@ function renderCalendar(){
     `;
     el.onclick = ()=> openDayDetail(dateStr);
     grid.appendChild(el);
+
+    if(hasNote && LANG==='es'){
+      updateCalSnippetEs(el.querySelector('.note-snippet'), noteEntries[0].text);
+    }
   }
 
   $('calLegend').innerHTML = '<span><span class="dot" style="background:var(--note)"></span>気になったことがある日</span>';
@@ -1027,6 +1051,7 @@ function renderDayEntries(dateStr){
       <div class="body">
         <div class="time">${time} ・ ${t.label}${e.chip? ' ・ '+e.chip:''}</div>
         ${e.text? `<div class="text">${escapeHtml(e.text)}</div>` : ''}
+        ${(e.text && LANG==='es')? `<div class="text-es" data-text="${escapeHtml(e.text)}" style="color:var(--ink-soft);font-size:12px;margin-top:2px;">🇲🇽 …</div>` : ''}
       </div>
       <button class="del" data-id="${e.id}">✕</button>
     `;
@@ -1043,6 +1068,15 @@ function renderDayEntries(dateStr){
       renderTimeline();
     };
   });
+  // 獣医向け: メモのスペイン語訳をフルテキストで表示(カレンダーの5文字とは別)
+  if(LANG==='es'){
+    wrap.querySelectorAll('.text-es').forEach(async (elx)=>{
+      const jaText = elx.dataset.text;
+      const {text} = await translateJaToEs(jaText);
+      if(!document.body.contains(elx)) return;
+      elx.textContent = text ? ('🇲🇽 ' + text) : '';
+    });
+  }
 }
 
 function openDayDetail(dateStr){
@@ -1247,6 +1281,94 @@ function toggleLang(){
   LANG = (LANG === 'ja') ? 'es' : 'ja';
   localStorage.setItem(LANG_KEY, LANG);
   applyI18n();
+  renderCalendar();
+  renderTimeline();
+  if(currentDayDate) renderDayEntries(currentDayDate);
+}
+
+// --- 自由記述メモの日本語→スペイン語 変換 ---------------------------
+// 目的: カレンダーの吹き出し(5文字)と、日別詳細画面のメモに、獣医が
+// パッと見て意味が拾える程度のスペイン語を添える。完璧な翻訳ではなく
+// 「気づき・目安」用。正確な意味はMoが日本語原文で把握している前提。
+//
+// 優先順位: ①固定辞書(完全一致) → ②翻訳キャッシュ → ③Google翻訳(非公式
+// エンドポイント) → ④MyMemory API(フォールバック)。すべて失敗したら
+// 空文字を返し、呼び出し側は日本語原文にフォールバックする。
+// (辞書・キャッシュはindex.html/demo.html共通。翻訳ヘルパーであって
+// 記録データではないので、demoデータのように分離する必要はない)
+const TRANSLATE_DICT_KEY = 'wanko-translate-dict-v1';
+const TRANSLATE_CACHE_KEY = 'wanko-translate-cache-v1';
+
+// よく使う単語はここに追加していくと、翻訳が安定し呼び出し回数も減る。
+// キーは完全一致(前後の空白はtrimして比較)。
+const DEFAULT_ES_DICT = {
+  '下痢': 'diarrea',
+  '嘔吐': 'vómito',
+  '発作': 'convulsión',
+  '不食': 'no comió',
+  '遅食': 'comió tarde',
+};
+
+function loadEsDict(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(TRANSLATE_DICT_KEY) || '{}');
+    return Object.assign({}, DEFAULT_ES_DICT, saved);
+  }catch(e){ return Object.assign({}, DEFAULT_ES_DICT); }
+}
+
+function loadTranslateCache(){
+  try{ return JSON.parse(localStorage.getItem(TRANSLATE_CACHE_KEY) || '{}'); }
+  catch(e){ return {}; }
+}
+function saveTranslateCache(cache){
+  try{ localStorage.setItem(TRANSLATE_CACHE_KEY, JSON.stringify(cache)); }
+  catch(e){ /* 保存できなくても翻訳自体は続行 */ }
+}
+
+// 日本語テキストをスペイン語に変換する。戻り値: {text, source}
+// source: 'dict' | 'cache' | 'api' | null(全て失敗)
+async function translateJaToEs(text){
+  const trimmed = (text||'').trim();
+  if(!trimmed) return {text:'', source:null};
+
+  const dict = loadEsDict();
+  if(dict[trimmed]) return {text: dict[trimmed], source:'dict'};
+
+  const cache = loadTranslateCache();
+  if(cache[trimmed]) return {text: cache[trimmed], source:'cache'};
+
+  // ① Google翻訳(非公式エンドポイント)。仕様変更やCORS制限で
+  // 落ちることがあるため、必ずtry/catchで②へフォールバックする。
+  try{
+    const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=ja&tl=es&dt=t&q=' + encodeURIComponent(trimmed);
+    const res = await fetch(url);
+    if(res.ok){
+      const data = await res.json();
+      const translated = (data[0]||[]).map(seg=>seg[0]).join('');
+      if(translated){
+        cache[trimmed] = translated;
+        saveTranslateCache(cache);
+        return {text: translated, source:'api'};
+      }
+    }
+  }catch(e){ /* ②へ */ }
+
+  // ② MyMemory API(フォールバック)
+  try{
+    const url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(trimmed) + '&langpair=ja|es';
+    const res = await fetch(url);
+    if(res.ok){
+      const data = await res.json();
+      const translated = data && data.responseData && data.responseData.translatedText;
+      if(translated){
+        cache[trimmed] = translated;
+        saveTranslateCache(cache);
+        return {text: translated, source:'api'};
+      }
+    }
+  }catch(e){ /* 両方失敗 */ }
+
+  return {text:'', source:null};
 }
 
 async function loadLogs(){
