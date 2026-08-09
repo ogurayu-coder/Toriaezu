@@ -911,11 +911,13 @@ function renderTimeline(){
           <div class="body">
             <div class="time">${time} ・ <b style="color:${dog.color}">${dog.name}</b> ・ ${typeLabel(e.type)}${e.chip? ' ・ '+chipLabel(e.type, e.chip):''}</div>
             ${e.text? `<div class="text">${escapeHtml(e.text)}</div>` : ''}
+            ${(e.text && LANG==='es')? `<div class="text-es" data-text="${escapeHtml(e.text)}" style="color:var(--ink-soft);font-size:12px;margin-top:2px;">🇲🇽 …</div>` : ''}
           </div>
         `;
         wrap.appendChild(row);
       });
     });
+    if(LANG==='es') fillEsTranslations(wrap);
     return;
   }
 
@@ -946,6 +948,7 @@ function renderTimeline(){
         <div class="body">
           <div class="time">${time} ・ ${typeLabel(e.type)}${e.chip? ' ・ '+chipLabel(e.type, e.chip):''}</div>
           ${e.text? `<div class="text">${escapeHtml(e.text)}</div>` : ''}
+          ${(e.text && LANG==='es')? `<div class="text-es" data-text="${escapeHtml(e.text)}" style="color:var(--ink-soft);font-size:12px;margin-top:2px;">🇲🇽 …</div>` : ''}
         </div>
         <button class="del" data-id="${e.id}">✕</button>
       `;
@@ -962,6 +965,7 @@ function renderTimeline(){
       renderCalendar();
     };
   });
+  if(LANG==='es') fillEsTranslations(wrap);
 }
 
 function escapeHtml(s){
@@ -1069,6 +1073,28 @@ $('calendarBtn').onclick = ()=>{
 
 /* ---------- Day detail (view + retroactive add) ---------- */
 
+// メモのスペイン語訳をまとめて反映するための共通ヘルパー。
+// タイムライン(デフォルト画面)・検索結果・日別詳細のどこからでも呼べる。
+// 辞書/キャッシュ済みのものは即座に反映し、未知の単語だけ1件ずつ順番に
+// API翻訳する(並列で一気に呼ぶとGoogle側に負荷をかけすぎるため)。
+async function fillEsTranslations(rootEl){
+  const els = Array.from(rootEl.querySelectorAll('.text-es'));
+  for(const elx of els){
+    const jaText = elx.dataset.text;
+    const trimmed = (jaText||'').trim();
+    const dict = loadEsDict();
+    const cache = loadTranslateCache();
+    if(dict[trimmed]){ elx.textContent = '🇲🇽 ' + dict[trimmed]; continue; }
+    if(cache[trimmed]){ elx.textContent = '🇲🇽 ' + cache[trimmed]; continue; }
+
+    const {text} = await translateJaToEs(jaText);
+    if(document.body.contains(elx)){
+      elx.textContent = text ? ('🇲🇽 ' + text) : '';
+    }
+    await new Promise(r=>setTimeout(r, 200)); // 未知語の連続呼び出しを少し間引く
+  }
+}
+
 function renderDayEntries(dateStr){
   const wrap = $('dayEntries');
   wrap.innerHTML = '';
@@ -1106,14 +1132,7 @@ function renderDayEntries(dateStr){
     };
   });
   // 獣医向け: メモのスペイン語訳をフルテキストで表示(カレンダーの5文字とは別)
-  if(LANG==='es'){
-    wrap.querySelectorAll('.text-es').forEach(async (elx)=>{
-      const jaText = elx.dataset.text;
-      const {text} = await translateJaToEs(jaText);
-      if(!document.body.contains(elx)) return;
-      elx.textContent = text ? ('🇲🇽 ' + text) : '';
-    });
-  }
+  if(LANG==='es') fillEsTranslations(wrap);
 }
 
 function openDayDetail(dateStr){
@@ -1347,6 +1366,8 @@ const DEFAULT_ES_DICT = {
   'ビビリション': 'orinó de miedo',
   'ボードテラ': 'vacuna Bordetella',
   '牛骨オヤツ': 'premio',
+  '減薬': 'redujo la dosis',
+  '増薬': 'aumentó la dosis',
 };
 
 function loadEsDict(){
