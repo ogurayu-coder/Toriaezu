@@ -1519,7 +1519,9 @@ $('backupBtn').onclick = ()=>{
 
 $('restoreBtn').onclick = ()=>{
   backupMode = 'restore';
-  $('backupPanelLabel').textContent = '保存しておいたバックアップ内容をここに貼り付けて「復元する」を押してください。(犬のリストごと復元されるので、削除した犬も元通りになります)';
+  $('backupPanelLabel').textContent = (LANG==='es')
+    ? 'Pega aquí el contenido del respaldo guardado y presiona "Restaurar". (Se restaurará el estado guardado en ese respaldo)'
+    : '保存しておいたバックアップ内容をここに貼り付けて「復元する」を押してください。(バックアップを取得した時点の状態を復元します)';
   $('backupText').readOnly = false;
   $('backupText').value = '';
   $('backupCopyBtn').textContent = '復元する';
