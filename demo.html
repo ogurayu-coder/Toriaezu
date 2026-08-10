@@ -1509,10 +1509,12 @@ let backupMode = null; // 'view' or 'restore'
 
 $('backupBtn').onclick = ()=>{
   backupMode = 'view';
-  $('backupPanelLabel').textContent = 'この内容を長押しして全選択→コピーし、メモアプリなどに保存してください。(犬のリストと記録の両方が含まれます)';
+  $('backupPanelLabel').textContent = (LANG==='es')
+    ? 'Mantén presionado el texto para seleccionarlo todo, cópialo y guárdalo en una app de notas. (Incluye tanto la lista de perritos como los registros)'
+    : 'この内容を長押しして全選択→コピーし、メモアプリなどに保存してください。(犬のリストと記録の両方が含まれます)';
   $('backupText').readOnly = true;
   $('backupText').value = JSON.stringify({dogs: DOGS, logs: logs}, null, 2);
-  $('backupCopyBtn').textContent = 'コピーする';
+  $('backupCopyBtn').textContent = (LANG==='es') ? 'Copiar' : 'コピーする';
   $('backupPanel').style.display = 'block';
   $('backupPanel').scrollIntoView({behavior:'smooth', block:'center'});
 };
@@ -1524,7 +1526,7 @@ $('restoreBtn').onclick = ()=>{
     : '保存しておいたバックアップ内容をここに貼り付けて「復元する」を押してください。(バックアップを取得した時点の状態を復元します)';
   $('backupText').readOnly = false;
   $('backupText').value = '';
-  $('backupCopyBtn').textContent = '復元する';
+  $('backupCopyBtn').textContent = (LANG==='es') ? 'Restaurar' : '復元する';
   $('backupPanel').style.display = 'block';
   $('backupPanel').scrollIntoView({behavior:'smooth', block:'center'});
 };
@@ -1534,7 +1536,9 @@ $('backupCloseBtn').onclick = ()=>{
 };
 
 $('resetSetupBtn').onclick = ()=>{
-  const ok = confirm('この端末に保存されている犬のリストと、すべての記録が消えます。バックアップを取っていない記録は復元できません。本当に最初からやり直しますか?');
+  const ok = confirm((LANG==='es')
+    ? 'Se borrará la lista de perritos y todos los registros guardados en este dispositivo. Los registros sin respaldo no podrán recuperarse. ¿Seguro que quieres empezar de nuevo?'
+    : 'この端末に保存されている犬のリストと、すべての記録が消えます。バックアップを取っていない記録は復元できません。本当に最初からやり直しますか?');
   if(!ok) return;
   try{
     localStorage.removeItem(DOGS_KEY);
@@ -1549,9 +1553,13 @@ $('backupCopyBtn').onclick = async ()=>{
     $('backupText').setSelectionRange(0, 999999);
     try{
       await navigator.clipboard.writeText($('backupText').value);
-      $('backupPanelLabel').textContent = 'コピーしました。メモアプリなどに貼り付けて保存してください。';
+      $('backupPanelLabel').textContent = (LANG==='es')
+        ? 'Copiado. Pégalo en una app de notas para guardarlo.'
+        : 'コピーしました。メモアプリなどに貼り付けて保存してください。';
     }catch(e){
-      $('backupPanelLabel').textContent = 'テキストを選択したので、そのままコピーしてください(自動コピーは使えませんでした)。';
+      $('backupPanelLabel').textContent = (LANG==='es')
+        ? 'Se seleccionó el texto; cópialo manualmente (no se pudo copiar automáticamente).'
+        : 'テキストを選択したので、そのままコピーしてください(自動コピーは使えませんでした)。';
     }
   }else{
     try{
@@ -1580,11 +1588,15 @@ $('backupCopyBtn').onclick = async ()=>{
         activeDog = DOGS[0].id;
       }
       renderAll();
-      $('backupPanelLabel').textContent = '復元しました。保存も試みます…';
+      $('backupPanelLabel').textContent = (LANG==='es')
+        ? 'Restaurado. Intentando guardar…'
+        : '復元しました。保存も試みます…';
       await saveLogsPlain();
       $('backupPanel').style.display = 'none';
     }catch(e){
-      $('backupPanelLabel').textContent = '⚠️ 内容を読み込めませんでした。貼り付けた内容を確認してください。';
+      $('backupPanelLabel').textContent = (LANG==='es')
+        ? '⚠️ No se pudo leer el contenido. Revisa lo que pegaste.'
+        : '⚠️ 内容を読み込めませんでした。貼り付けた内容を確認してください。';
     }
   }
 };
