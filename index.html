@@ -425,7 +425,6 @@
       <button id="calNext">›</button>
     </div>
     <div class="cal-grid" id="calendarGrid"></div>
-    <div class="cal-legend" id="calLegend"></div>
   </div>
 
   <div id="backupPanel" style="display:none;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:14px;">
@@ -996,10 +995,16 @@ async function updateCalSnippetEs(snippetEl, jaText){
 function renderCalendar(){
   const grid = $('calendarGrid');
   const y = calState.year, m = calState.month;
-  $('calLabel').textContent = `${y}年${m+1}月`;
+  if(LANG==='es'){
+    const esMonths = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    $('calLabel').textContent = `${esMonths[m]} de ${y}`;
+  }else{
+    $('calLabel').textContent = `${y}年${m+1}月`;
+  }
   grid.innerHTML = '';
 
-  ['日','月','火','水','木','金','土'].forEach(wd=>{
+  const weekdays = (LANG==='es') ? ['D','L','M','X','J','V','S'] : ['日','月','火','水','木','金','土'];
+  weekdays.forEach(wd=>{
     const el = document.createElement('div');
     el.className='cal-wd';
     el.textContent = wd;
@@ -1038,8 +1043,6 @@ function renderCalendar(){
       updateCalSnippetEs(el.querySelector('.note-snippet'), noteEntries[0].text);
     }
   }
-
-  $('calLegend').innerHTML = '<span><span class="dot" style="background:var(--note)"></span>気になったことがある日</span>';
 }
 
 $('calPrev').onclick = ()=>{
