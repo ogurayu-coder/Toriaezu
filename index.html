@@ -14,6 +14,7 @@
     --ink-soft:#5B6B58;
     --line:#DAD0BA;
     --meal:#C97B3D;
+    --snack:#D9A441;
     --walk:#3F7D6B;
     --poop:#8B6F4E;
     --med:#A63D40;
@@ -111,7 +112,7 @@
   /* Quick add buttons */
   .quickadd{
     display:grid;
-    grid-template-columns:repeat(5,1fr);
+    grid-template-columns:repeat(3,1fr);
     gap:8px;
     margin-bottom:22px;
   }
@@ -135,6 +136,7 @@
   .qbtn:active{transform:scale(.94);}
   .qbtn .ic{font-size:19px;}
   .qbtn.meal{border-bottom:3px solid var(--meal);}
+  .qbtn.snack{border-bottom:3px solid var(--snack);}
   .qbtn.walk{border-bottom:3px solid var(--walk);}
   .qbtn.poop{border-bottom:3px solid var(--poop);}
   .qbtn.med{border-bottom:3px solid var(--med);}
@@ -399,7 +401,8 @@
   </div>
 
   <div class="quickadd">
-    <button class="qbtn meal" data-type="meal"><span class="ic">🍖</span><span data-i18n="qbtnMeal">ごはん</span></button>
+    <button class="qbtn meal" data-type="meal"><span class="ic">🥣</span><span data-i18n="qbtnMeal">ごはん</span></button>
+    <button class="qbtn snack" data-type="snack"><span class="ic">🦴</span><span data-i18n="qbtnSnack">おやつ</span></button>
     <button class="qbtn walk" data-type="walk"><span class="ic">🚶</span><span data-i18n="qbtnWalk">散歩</span></button>
     <button class="qbtn poop" data-type="poop"><span class="ic">💩</span><span data-i18n="qbtnPoop">うんち</span></button>
     <button class="qbtn med" data-type="med"><span class="ic">💊</span><span data-i18n="qbtnMed">お薬</span></button>
@@ -745,7 +748,8 @@ function dogIconSVG(dog, size){
 }
 
 const TYPES = {
-  meal: {label:'ごはん', icon:'🍖', color:'var(--meal)', chips:['完食','少し残した','半分','食べず']},
+  meal: {label:'ごはん', icon:'🥣', color:'var(--meal)', chips:['完食','少し残した','半分','食べず']},
+  snack: {label:'おやつ', icon:'🦴', color:'var(--snack)', chips:['少しだけ','ふつう','たくさん']},
   walk: {label:'散歩', icon:'🚶', color:'var(--walk)', chips:['近所ひと回り','長め','元気いっぱい','疲れ気味']},
   poop: {label:'うんち', icon:'💩', color:'var(--poop)', chips:['普通','やわらかめ','硬め','下痢','血が混じる']},
   med:  {label:'お薬', icon:'💊', color:'var(--med)', chips:[]},
@@ -759,13 +763,15 @@ const TYPES = {
 // 壊れたり検索できなくなったりしないようにする。
 const TYPE_LABEL_ES = {
   meal: 'Comida',
+  snack: 'Premio',
   walk: 'Paseo',
   poop: 'Popó',
   med: 'Medicina',
-  note: 'Observación',
+  note: 'Nota',
 };
 const CHIP_ES_MAP = {
   meal: {'完食':'Comió todo','少し残した':'Dejó un poco','半分':'Comió la mitad','食べず':'No comió'},
+  snack: {'少しだけ':'Un poco','ふつう':'Normal','たくさん':'Bastante'},
   walk: {'近所ひと回り':'Vuelta al barrio','長め':'Paseo largo','元気いっぱい':'Muy enérgico','疲れ気味':'Algo cansado'},
   poop: {'普通':'Normal','やわらかめ':'Blanda','硬め':'Dura','下痢':'Diarrea','血が混じる':'Con sangre'},
   med: {},
@@ -1251,6 +1257,7 @@ const I18N = {
     startBtn: 'はじめる',
     searchPlaceholder: '🔍 犬の名前・日付・メモで検索(例:発作、Mama、7/3)',
     qbtnMeal: 'ごはん',
+    qbtnSnack: 'おやつ',
     qbtnWalk: '散歩',
     qbtnPoop: 'うんち',
     qbtnMed: 'お薬',
@@ -1279,10 +1286,11 @@ const I18N = {
     startBtn: 'Empezar',
     searchPlaceholder: '🔍 Buscar por nombre, fecha o nota (ej: convulsión, Mama, 7/3)',
     qbtnMeal: 'Comida',
+    qbtnSnack: 'Premio',
     qbtnWalk: 'Paseo',
     qbtnPoop: 'Popó',
     qbtnMed: 'Medicina',
-    qbtnNote: 'Observación',
+    qbtnNote: 'Nota',
     calendarBtn: '📅 Calendario',
     backupBtn: 'Ver respaldo',
     restoreBtn: 'Restaurar respaldo',
