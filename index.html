@@ -435,7 +435,7 @@
     <textarea id="backupText" style="width:100%;min-height:120px;font-family:monospace;font-size:11px;border-radius:8px;border:1px solid var(--line);padding:8px;background:#fff;"></textarea>
     <div style="display:flex;gap:8px;margin-top:8px;">
       <button id="backupCopyBtn" style="flex:1;font-size:12px;padding:9px;border-radius:8px;border:none;background:var(--ink);color:var(--paper);cursor:pointer;"></button>
-      <button id="backupCloseBtn" style="flex:1;font-size:12px;padding:9px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink-soft);cursor:pointer;">閉じる</button>
+      <button id="backupCloseBtn" data-i18n="closeBtn" style="flex:1;font-size:12px;padding:9px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink-soft);cursor:pointer;">閉じる</button>
     </div>
   </div>
 
@@ -462,7 +462,7 @@
     <div class="quickadd" id="dayQuickadd"></div>
     <div id="dayEntries"></div>
     <div class="actions">
-      <button class="cancel" id="dayCloseBtn">閉じる</button>
+      <button class="cancel" id="dayCloseBtn" data-i18n="closeBtn">閉じる</button>
     </div>
   </div>
 </div>
@@ -1270,6 +1270,7 @@ const I18N = {
     manageTitle: '🐾 犬を管理',
     manageDesc: '名前・見た目の編集、追加、削除ができます。「キャンセル」を押せば何も変更されません。削除も「保存する」を押すまでは確定しないので、安心して試せます。',
     cancelBtn: 'キャンセル',
+    closeBtn: '閉じる',
     saveBtn: '保存する',
     namePlaceholder: '名前(例: ポチ)',
     subPlaceholder: 'ひとこと(任意・例: 3歳、柴犬)',
@@ -1299,6 +1300,7 @@ const I18N = {
     manageTitle: '🐾 Administrar perritos',
     manageDesc: 'Puedes editar nombre y apariencia, agregar o borrar perritos. Si presionas "Cancelar", no se guardará ningún cambio. Los borrados tampoco son definitivos hasta presionar "Guardar", así que puedes probar con confianza.',
     cancelBtn: 'Cancelar',
+    closeBtn: 'Cerrar',
     saveBtn: 'Guardar',
     namePlaceholder: 'Nombre (ej: Firulais)',
     subPlaceholder: 'Nota breve (opcional, ej: 3 años)',
