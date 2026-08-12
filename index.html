@@ -1506,8 +1506,8 @@ let backupMode = null; // 'view' or 'restore'
 $('backupBtn').onclick = ()=>{
   backupMode = 'view';
   $('backupPanelLabel').textContent = (LANG==='es')
-    ? 'Mantén presionado el texto para seleccionarlo todo, cópialo y guárdalo en una app de notas. (Incluye tanto la lista de perritos como los registros)'
-    : 'この内容を長押しして全選択→コピーし、メモアプリなどに保存してください。(犬のリストと記録の両方が含まれます)';
+    ? 'Presiona el botón para copiar el respaldo y guárdalo en una app de notas. (Incluye tanto la lista de perritos como los registros)'
+    : '下のボタンでコピーし、メモアプリなどに保存してください。(犬のリストと記録の両方が含まれます)';
   $('backupText').readOnly = true;
   $('backupText').value = JSON.stringify({dogs: DOGS, logs: logs}, null, 2);
   $('backupCopyBtn').textContent = (LANG==='es') ? 'Copiar' : 'コピーする';
