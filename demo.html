@@ -56,6 +56,7 @@
     display:flex;
     gap:10px;
     overflow-x:auto;
+    padding-top:10px;
     padding-bottom:4px;
     scrollbar-width:none;
   }
@@ -366,7 +367,7 @@
 <div id="setupScreen">
   <div class="setup-wrap">
     <div style="text-align:right;margin-bottom:8px;">
-      <button id="langToggleBtnSetup" onclick="toggleLang()" style="font-size:12px;font-weight:700;padding:5px 10px;border-radius:20px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;">🇲🇽 ES(β)</button>
+      <button id="langToggleBtnSetup" onclick="toggleLang()" style="font-size:12px;font-weight:700;padding:5px 10px;border-radius:20px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;">ES(β)</button>
     </div>
     <h1 data-i18n="setupTitle">🐾 わんこノートへようこそ</h1>
     <p class="lead" data-i18n="setupLead">記録するワンちゃんを登録してください。名前と色を選ぶだけです。</p>
@@ -380,7 +381,7 @@
 <header>
   <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <h1 style="margin-bottom:0;">🐾 <span>わんこ</span>ノート <span style="color:var(--med);font-size:13px;vertical-align:middle;">(デモ版)</span></h1>
-    <button id="langToggleBtn" onclick="toggleLang()" style="flex:0 0 auto;font-size:12px;font-weight:700;padding:5px 10px;border-radius:20px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;">🇲🇽 ES(β)</button>
+    <button id="langToggleBtn" onclick="toggleLang()" style="flex:0 0 auto;font-size:12px;font-weight:700;padding:5px 10px;border-radius:20px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;">ES(β)</button>
   </div>
   <div class="tags" id="tags"></div>
 </header>
@@ -412,7 +413,7 @@
   </div>
 
   <div style="display:flex;gap:8px;margin-bottom:8px;">
-    <button id="calendarBtn" data-i18n="calendarBtn" style="flex:1;font-size:11px;padding:8px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink-soft);cursor:pointer;">📅 カレンダー</button>
+    <button id="calendarBtn" style="flex:1;font-size:11px;padding:8px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink-soft);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto;"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><line x1="3.5" y1="9.5" x2="20.5" y2="9.5"/><line x1="8" y1="3" x2="8" y2="6.5"/><line x1="16" y1="3" x2="16" y2="6.5"/></svg><span data-i18n="calendarBtn">カレンダー</span></button>
     <button id="backupBtn" data-i18n="backupBtn" style="flex:1;font-size:11px;padding:8px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink-soft);cursor:pointer;">バックアップを表示</button>
     <button id="restoreBtn" data-i18n="restoreBtn" style="flex:1;font-size:11px;padding:8px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink-soft);cursor:pointer;">バックアップを復元</button>
   </div>
@@ -917,7 +918,7 @@ function renderTimeline(){
           <div class="body">
             <div class="time">${time} ・ <b style="color:${dog.color}">${dog.name}</b> ・ ${typeLabel(e.type)}${e.chip? ' ・ '+chipLabel(e.type, e.chip):''}</div>
             ${e.text? `<div class="text">${escapeHtml(e.text)}</div>` : ''}
-            ${(e.text && LANG==='es')? `<div class="text-es" data-text="${escapeHtml(e.text)}" style="color:var(--ink-soft);font-size:12px;margin-top:2px;">🇲🇽 …</div>` : ''}
+            ${(e.text && LANG==='es')? `<div class="text-es" data-text="${escapeHtml(e.text)}" style="color:var(--ink-soft);font-size:12px;margin-top:2px;">ES ・ …</div>` : ''}
           </div>
         `;
         wrap.appendChild(row);
@@ -954,7 +955,7 @@ function renderTimeline(){
         <div class="body">
           <div class="time">${time} ・ ${typeLabel(e.type)}${e.chip? ' ・ '+chipLabel(e.type, e.chip):''}</div>
           ${e.text? `<div class="text">${escapeHtml(e.text)}</div>` : ''}
-          ${(e.text && LANG==='es')? `<div class="text-es" data-text="${escapeHtml(e.text)}" style="color:var(--ink-soft);font-size:12px;margin-top:2px;">🇲🇽 …</div>` : ''}
+          ${(e.text && LANG==='es')? `<div class="text-es" data-text="${escapeHtml(e.text)}" style="color:var(--ink-soft);font-size:12px;margin-top:2px;">ES ・ …</div>` : ''}
         </div>
         <button class="del" data-id="${e.id}">✕</button>
       `;
@@ -1094,12 +1095,12 @@ async function fillEsTranslations(rootEl){
     const trimmed = (jaText||'').trim();
     const dict = loadEsDict();
     const cache = loadTranslateCache();
-    if(dict[trimmed]){ elx.textContent = '🇲🇽 ' + dict[trimmed]; continue; }
-    if(cache[trimmed]){ elx.textContent = '🇲🇽 ' + cache[trimmed]; continue; }
+    if(dict[trimmed]){ elx.textContent = 'ES ・ ' + dict[trimmed]; continue; }
+    if(cache[trimmed]){ elx.textContent = 'ES ・ ' + cache[trimmed]; continue; }
 
     const {text} = await translateJaToEs(jaText);
     if(document.body.contains(elx)){
-      elx.textContent = text ? ('🇲🇽 ' + text) : '';
+      elx.textContent = text ? ('ES ・ ' + text) : '';
     }
     await new Promise(r=>setTimeout(r, 200)); // 未知語の連続呼び出しを少し間引く
   }
@@ -1124,7 +1125,7 @@ function renderDayEntries(dateStr){
       <div class="body">
         <div class="time">${time} ・ ${typeLabel(e.type)}${e.chip? ' ・ '+chipLabel(e.type, e.chip):''}</div>
         ${e.text? `<div class="text">${escapeHtml(e.text)}</div>` : ''}
-        ${(e.text && LANG==='es')? `<div class="text-es" data-text="${escapeHtml(e.text)}" style="color:var(--ink-soft);font-size:12px;margin-top:2px;">🇲🇽 …</div>` : ''}
+        ${(e.text && LANG==='es')? `<div class="text-es" data-text="${escapeHtml(e.text)}" style="color:var(--ink-soft);font-size:12px;margin-top:2px;">ES ・ …</div>` : ''}
       </div>
       <button class="del" data-id="${e.id}">✕</button>
     `;
@@ -1277,7 +1278,7 @@ const I18N = {
     qbtnMed: 'お薬',
     qbtnNote: '気になる',
     feedbackBtn: '📝 ご意見はこちら',
-    calendarBtn: '📅 カレンダー',
+    calendarBtn: 'カレンダー',
     backupBtn: 'バックアップを表示',
     restoreBtn: 'バックアップを復元',
     manageDogsBtn: '🐾 犬を管理(追加・編集・削除)',
@@ -1308,7 +1309,7 @@ const I18N = {
     qbtnMed: 'Medicina',
     qbtnNote: 'Nota',
     feedbackBtn: '📝 Tu opinión aquí',
-    calendarBtn: '📅 Calendario',
+    calendarBtn: 'Calendario',
     backupBtn: 'Ver respaldo',
     restoreBtn: 'Restaurar respaldo',
     manageDogsBtn: '🐾 Administrar perritos (agregar/editar/borrar)',
@@ -1342,11 +1343,13 @@ function applyI18n(){
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{
     el.placeholder = t(el.dataset.i18nPlaceholder);
   });
-  const btnLabel = (LANG === 'ja') ? '🇲🇽 ES(β)' : '🇯🇵 JA';
+  const FLAG_MX = '<svg viewBox="0 0 30 20" width="15" height="10" style="display:inline-block;vertical-align:-1px;border-radius:2px;overflow:hidden;"><rect width="30" height="20" fill="#fff"/><rect width="10" height="20" fill="#006341"/><rect x="20" width="10" height="20" fill="#CE1126"/></svg>';
+  const FLAG_JP = '<svg viewBox="0 0 30 20" width="15" height="10" style="display:inline-block;vertical-align:-1px;border-radius:2px;overflow:hidden;"><rect width="30" height="20" fill="#fff"/><circle cx="15" cy="10" r="6" fill="#BC002D"/></svg>';
+  const btnLabel = (LANG === 'ja') ? (FLAG_MX + ' ES(β)') : (FLAG_JP + ' JA');
   const btn = $('langToggleBtn');
-  if(btn) btn.textContent = btnLabel;
+  if(btn) btn.innerHTML = btnLabel;
   const btnSetup = $('langToggleBtnSetup');
-  if(btnSetup) btnSetup.textContent = btnLabel;
+  if(btnSetup) btnSetup.innerHTML = btnLabel;
 }
 
 function toggleLang(){
