@@ -451,10 +451,10 @@
     <h2><span id="sheetIcon"></span><span id="sheetTitle"></span></h2>
     <input type="time" id="entryTime">
     <div class="chiprow" id="chiprow"></div>
-    <textarea id="entryText" placeholder="メモ(任意)"></textarea>
+    <textarea id="entryText" data-i18n-placeholder="entryMemoPlaceholder" placeholder="メモ(任意)"></textarea>
     <div class="actions">
-      <button class="cancel" id="cancelBtn">やめる</button>
-      <button class="save" id="saveBtn">記録する</button>
+      <button class="cancel" id="cancelBtn" data-i18n="entryCancelBtn">やめる</button>
+      <button class="save" id="saveBtn" data-i18n="entrySaveBtn">記録する</button>
     </div>
   </div>
 </div>
@@ -1288,6 +1288,9 @@ const I18N = {
     cancelBtn: 'キャンセル',
     closeBtn: '閉じる',
     saveBtn: '保存する',
+    entryCancelBtn: 'やめる',
+    entrySaveBtn: '記録する',
+    entryMemoPlaceholder: 'メモ(任意)',
     namePlaceholder: '名前(例: ポチ)',
     subPlaceholder: 'ひとこと(任意・例: 3歳、柴犬)',
     deleteTitle: '削除',
@@ -1319,6 +1322,9 @@ const I18N = {
     cancelBtn: 'Cancelar',
     closeBtn: 'Cerrar',
     saveBtn: 'Guardar',
+    entryCancelBtn: 'Cancelar',
+    entrySaveBtn: 'Guardar',
+    entryMemoPlaceholder: 'Nota (opcional)',
     namePlaceholder: 'Nombre (ej: Firulais)',
     subPlaceholder: 'Nota breve (opcional, ej: 3 años)',
     deleteTitle: 'Eliminar',
@@ -1387,6 +1393,7 @@ const DEFAULT_ES_DICT = {
   '牛骨オヤツ': 'premio',
   '減薬': 'redujo la dosis',
   '増薬': 'aumentó la dosis',
+  '駆虫薬': 'antiparasitario',
 };
 
 function loadEsDict(){
