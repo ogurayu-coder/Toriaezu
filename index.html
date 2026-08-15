@@ -482,12 +482,9 @@
   </div>
 </div>
 
-<!-- Firebase (cloud sync between Mo and the vet). Loaded via <script> tags
-     (not npm/modules) so it drops straight into this single-file app. -->
-<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
-
+<!-- Firebase(クラウド同期)はJSから動的に読み込む。<script src>を直接
+     並べると、その読み込みが終わるまでアプリ本体まで止まってしまう
+     (回線が不安定な時にアプリごと開けなくなる不具合の原因になった)。 -->
 <script>
 // Built-in defaults — this is what Mo's own browser already has data
 // recorded against, so it must keep working exactly as before.
@@ -1263,22 +1260,55 @@ let fbReady = false;   // 匿名認証が終わって読み書きしてよい状
 let logsRef = null;
 let dogsRef = null;
 
-// 匿名ログインが終わる(または諦める)まで待つ。オフラインの人や、まだ
-// Authenticationを有効化していない場合でもアプリ本体は使えるよう、
-// 数秒でタイムアウトしてローカルのみの動作にフォールバックする。
-function initCloudSync(){
+const FB_SDK_BASE = 'https://www.gstatic.com/firebasejs/10.13.2/';
+
+// アプリ本体の動作をブロックしないよう、Firebase SDKはここで動的に
+// <script>を挿入して読み込む。回線が悪くても数秒でタイムアウトし、
+// オフライン動作(ローカル保存のみ)にフォールバックする。
+function loadScriptWithTimeout(src, timeoutMs){
   return new Promise(resolve=>{
     let done = false;
-    const finish = ()=>{ if(!done){ done = true; resolve(); } };
-    try{
-      firebase.initializeApp(firebaseConfig);
-      const auth = firebase.auth();
-      const db = firebase.database();
-      logsRef = db.ref('sync/logs');
-      dogsRef = db.ref('sync/dogs');
+    const finish = ok=>{ if(!done){ done = true; resolve(ok); } };
+    const el = document.createElement('script');
+    el.src = src;
+    el.onload = ()=> finish(true);
+    el.onerror = ()=> finish(false);
+    document.head.appendChild(el);
+    setTimeout(()=> finish(false), timeoutMs);
+  });
+}
 
+// 匿名ログインが終わる(または諦める)まで待つ。オフラインの人や、まだ
+// Authenticationを有効化していない場合でもアプリ本体は使えるよう、
+// SDKの読み込み自体も含めて数秒でタイムアウトしてローカルのみの
+// 動作にフォールバックする。
+async function initCloudSync(){
+  try{
+    const appLoaded = await loadScriptWithTimeout(FB_SDK_BASE + 'firebase-app-compat.js', 4000);
+    if(!appLoaded){
+      console.warn('クラウド同期の読み込みがタイムアウトしました(オフラインのまま動作します)');
+      return;
+    }
+    await Promise.all([
+      loadScriptWithTimeout(FB_SDK_BASE + 'firebase-auth-compat.js', 4000),
+      loadScriptWithTimeout(FB_SDK_BASE + 'firebase-database-compat.js', 4000),
+    ]);
+    if(typeof firebase === 'undefined' || !firebase.auth || !firebase.database){
+      console.warn('クラウド同期SDKの読み込みに失敗しました(オフラインのまま動作します)');
+      return;
+    }
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+    logsRef = db.ref('sync/logs');
+    dogsRef = db.ref('sync/dogs');
+
+    await new Promise(resolve=>{
+      let done = false;
+      const finish = ()=>{ if(!done){ done = true; resolve(); } };
       auth.onAuthStateChanged(user=>{
-        if(user){ fbReady = true; }
+        if(user) fbReady = true;
         finish();
       });
       auth.signInAnonymously().catch(e=>{
@@ -1286,11 +1316,10 @@ function initCloudSync(){
         finish();
       });
       setTimeout(finish, 4000);
-    }catch(e){
-      console.warn('クラウド同期を初期化できませんでした(オフラインのまま動作します):', e);
-      finish();
-    }
-  });
+    });
+  }catch(e){
+    console.warn('クラウド同期を初期化できませんでした(オフラインのまま動作します):', e);
+  }
 }
 
 // ローカル(この端末)に犬のリストも記録も無い場合に、クラウド上の
@@ -2049,28 +2078,39 @@ $('manageSaveBtn').onclick = async ()=>{
 
 (async ()=>{
   applyI18n();
-  await initCloudSync();
   let ready = initDogs();
-  if(!ready){
-    ready = await tryAdoptFromCloud();
-  }
-  attachCloudListeners();
   if(ready){
+    // この端末には既にローカルデータがある(=Moの普段使い)。回線状況に
+    // 関係なく即座に画面を表示し、クラウド同期は裏側で後から行う。
     activeDog = DOGS[0].id;
     await loadLogs();
     renderAll();
-    // クラウドにまだ犬リストが無い場合(=このアプリを初めてクラウド対応
-    // させた時)は、この端末の内容を初期データとしてアップロードする。
-    // 犬リストが既にクラウドにある場合は、うっかり上書きしないよう触らない。
-    if(fbReady && dogsRef){
-      try{
-        const snap = await dogsRef.once('value');
-        if(!snap.exists()) await pushDogsToCloud();
-      }catch(e){}
-    }
-    pushLogsToCloud();
+    initCloudSync().then(async ()=>{
+      attachCloudListeners();
+      // クラウドにまだ犬リストが無い場合(=初めてクラウド対応させた時)
+      // は、この端末の内容を初期データとしてアップロードする。既にある
+      // 場合は、うっかり上書きしないよう触らない。
+      if(fbReady && dogsRef){
+        try{
+          const snap = await dogsRef.once('value');
+          if(!snap.exists()) await pushDogsToCloud();
+        }catch(e){}
+      }
+      pushLogsToCloud();
+    });
   }else{
-    showSetupScreen();
+    // ローカルにまだ何も無い(獣医さんの端末で初めて開いた場合など)。
+    // この場合だけ、クラウドの内容を取り込めるか試してから判断する。
+    await initCloudSync();
+    attachCloudListeners();
+    ready = await tryAdoptFromCloud();
+    if(ready){
+      activeDog = DOGS[0].id;
+      await loadLogs();
+      renderAll();
+    }else{
+      showSetupScreen();
+    }
   }
 })();
 
