@@ -56,8 +56,7 @@
     display:flex;
     gap:10px;
     overflow-x:auto;
-    padding-top:10px;
-    padding-bottom:4px;
+    padding:10px 10px 4px;
     scrollbar-width:none;
   }
   .tags::-webkit-scrollbar{display:none;}
@@ -92,7 +91,7 @@
   .tag.active{
     background:var(--card);
     transform:translateY(-4px) scale(1.04);
-    box-shadow:0 6px 14px rgba(43,58,42,.15);
+    box-shadow:0 3px 6px rgba(43,58,42,.16), 0 8px 12px rgba(43,58,42,.10);
   }
   .tag.active::before{border-color:var(--dogcolor);}
   .tag.active{border-color:var(--dogcolor);}
