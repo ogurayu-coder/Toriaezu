@@ -1377,7 +1377,7 @@ function toggleLang(){
 // (辞書・キャッシュはindex.html/demo.html共通。翻訳ヘルパーであって
 // 記録データではないので、demoデータのように分離する必要はない)
 const TRANSLATE_DICT_KEY = 'wanko-translate-dict-v1';
-const TRANSLATE_CACHE_KEY = 'wanko-translate-cache-v1';
+const TRANSLATE_CACHE_KEY = 'wanko-translate-cache-v2'; // v1→v2: 辞書更新前の古い訳をリセットするため
 
 // よく使う単語はここに追加していくと、翻訳が安定し呼び出し回数も減る。
 // キーは完全一致(前後の空白はtrimして比較)。
@@ -1423,10 +1423,30 @@ async function translateJaToEs(text){
   const cache = loadTranslateCache();
   if(cache[trimmed]) return {text: cache[trimmed], source:'cache'};
 
+  // 部分一致: メモの中に辞書の単語が含まれている場合(例:「駆虫薬
+  // nexgard spectra」のように商品名などと一緒に書かれている場合)、
+  // 先にその部分だけ辞書の訳語へ置き換えてからAPIに渡す。長い語から
+  // 順にマッチさせることで、部分的にかぶる語がある場合の誤置換を防ぐ。
+  let queryText = trimmed;
+  const dictKeys = Object.keys(dict).sort((a,b)=> b.length - a.length);
+  for(const key of dictKeys){
+    if(queryText.includes(key)){
+      queryText = queryText.split(key).join(dict[key]);
+    }
+  }
+  // 置き換え後に日本語(ひらがな・カタカナ・漢字)が残っていなければ、
+  // もう翻訳の必要はない(=辞書の語+商品名などの英数字だけになった)。
+  const hasJapanese = /[\u3040-\u30ff\u3400-\u9fff]/.test(queryText);
+  if(!hasJapanese){
+    cache[trimmed] = queryText;
+    saveTranslateCache(cache);
+    return {text: queryText, source:'dict'};
+  }
+
   // ① Google翻訳(非公式エンドポイント)。仕様変更やCORS制限で
   // 落ちることがあるため、必ずtry/catchで②へフォールバックする。
   try{
-    const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=ja&tl=es&dt=t&q=' + encodeURIComponent(trimmed);
+    const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=ja&tl=es&dt=t&q=' + encodeURIComponent(queryText);
     const res = await fetch(url);
     if(res.ok){
       const data = await res.json();
@@ -1441,7 +1461,7 @@ async function translateJaToEs(text){
 
   // ② MyMemory API(フォールバック)
   try{
-    const url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(trimmed) + '&langpair=ja|es';
+    const url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(queryText) + '&langpair=ja|es';
     const res = await fetch(url);
     if(res.ok){
       const data = await res.json();
