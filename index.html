@@ -482,6 +482,12 @@
   </div>
 </div>
 
+<!-- Firebase (cloud sync between Mo and the vet). Loaded via <script> tags
+     (not npm/modules) so it drops straight into this single-file app. -->
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
+
 <script>
 // Built-in defaults — this is what Mo's own browser already has data
 // recorded against, so it must keep working exactly as before.
@@ -1240,6 +1246,124 @@ async function saveEntry(){
 const STORAGE_KEY = 'dog-tracker-logs-v1';
 const DOGS_KEY = 'dog-tracker-dogs-v1';
 
+// --- クラウド同期(Moと獣医の間でデータを共有) -----------------------
+// localStorageが常に「その場で表示するためのデータ」の主役。Firebaseは
+// 裏で読み書きするだけで、オフラインでもアプリ自体は問題なく動く。
+const firebaseConfig = {
+  apiKey: "AIzaSyDnGz8NIiUtIYyDlY5Gz6XqTgeNcVgxbE8",
+  authDomain: "wanko-note-56080.firebaseapp.com",
+  databaseURL: "https://wanko-note-56080-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "wanko-note-56080",
+  storageBucket: "wanko-note-56080.firebasestorage.app",
+  messagingSenderId: "654849243437",
+  appId: "1:654849243437:web:b619b9ff14a58f8d627ba4",
+};
+
+let fbReady = false;   // 匿名認証が終わって読み書きしてよい状態か
+let logsRef = null;
+let dogsRef = null;
+
+// 匿名ログインが終わる(または諦める)まで待つ。オフラインの人や、まだ
+// Authenticationを有効化していない場合でもアプリ本体は使えるよう、
+// 数秒でタイムアウトしてローカルのみの動作にフォールバックする。
+function initCloudSync(){
+  return new Promise(resolve=>{
+    let done = false;
+    const finish = ()=>{ if(!done){ done = true; resolve(); } };
+    try{
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      const db = firebase.database();
+      logsRef = db.ref('sync/logs');
+      dogsRef = db.ref('sync/dogs');
+
+      auth.onAuthStateChanged(user=>{
+        if(user){ fbReady = true; }
+        finish();
+      });
+      auth.signInAnonymously().catch(e=>{
+        console.warn('クラウド同期用の匿名ログインに失敗しました(オフラインのまま動作します):', e);
+        finish();
+      });
+      setTimeout(finish, 4000);
+    }catch(e){
+      console.warn('クラウド同期を初期化できませんでした(オフラインのまま動作します):', e);
+      finish();
+    }
+  });
+}
+
+// ローカル(この端末)に犬のリストも記録も無い場合に、クラウド上の
+// データをそのまま取り込む。獣医さんの端末で初めて開いたときに、
+// 手入力のセットアップ画面を出さずに済むようにするための処理。
+async function tryAdoptFromCloud(){
+  if(!fbReady || !dogsRef || !logsRef) return false;
+  try{
+    const dogsSnap = await dogsRef.once('value');
+    const remoteDogs = dogsSnap.val();
+    if(!remoteDogs || !Array.isArray(remoteDogs) || !remoteDogs.length) return false;
+    DOGS = remoteDogs;
+    saveDogsConfig();
+    const logsSnap = await logsRef.once('value');
+    logs = logsSnap.val() || {};
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
+    return true;
+  }catch(e){
+    console.warn('クラウドからの取り込みに失敗しました:', e);
+    return false;
+  }
+}
+
+// 相手側(獣医またはMo)が記録を追加・変更するたびに呼ばれ、このタブの
+// 表示にも取り込む。mergeLogsで既存のローカル分と統合するので、届いた
+// 差分がこちらの未保存データを消すことはない。
+function attachCloudListeners(){
+  if(!logsRef || !dogsRef) return;
+
+  logsRef.on('value', snap=>{
+    const remote = snap.val() || {};
+    const merged = mergeLogs(remote, logs);
+    logs = merged;
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(logs)); }catch(e){}
+    if(DOGS.length){ renderAll(); if(currentDayDate){ renderDayEntries(currentDayDate); } }
+  });
+
+  dogsRef.on('value', snap=>{
+    const remote = snap.val();
+    if(!remote || !Array.isArray(remote) || !remote.length) return;
+    // 犬のリストはシンプルに「最後にどちらかが保存した内容」を採用する
+    // (記録本体と違い、頻繁に両側から同時編集される想定ではないため)。
+    const changed = JSON.stringify(remote) !== JSON.stringify(DOGS);
+    if(changed && DOGS.length){
+      DOGS = remote;
+      saveDogsConfig();
+      if(!DOGS.find(d=>d.id===activeDog)){ activeDog = DOGS[0].id; }
+      renderAll();
+    }
+  });
+}
+
+// logsの保存直後に呼ぶ。クラウド側の最新値と統合してから書き込むので、
+// 自分がオフラインの間に相手が追加した記録を上書きしてしまうことはない。
+async function pushLogsToCloud(){
+  if(!fbReady || !logsRef) return;
+  try{
+    const snap = await logsRef.once('value');
+    const remote = snap.val() || {};
+    const merged = mergeLogs(remote, logs);
+    await logsRef.set(merged);
+  }catch(e){
+    console.warn('クラウドへの同期に失敗しました(この端末には保存済みです):', e);
+  }
+}
+
+async function pushDogsToCloud(){
+  if(!fbReady || !dogsRef) return;
+  try{ await dogsRef.set(DOGS); }catch(e){
+    console.warn('犬リストのクラウド同期に失敗しました(この端末には保存済みです):', e);
+  }
+}
+
 // --- 言語切り替え(日本語⇔スペイン語) -------------------------------
 // UI表示テキストだけを切り替える仕組み。記録データ(dog.subの注意書きや
 // 各エントリのメモ)はユーザーが打った生テキストなので、ここでは翻訳し
@@ -1475,6 +1599,7 @@ async function saveLogs(){
     localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
     const now = new Date();
     $('status').textContent = `最終保存 ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}(この端末に保存)`;
+    pushLogsToCloud();
   }catch(e){
     $('status').textContent = `⚠️ 保存エラー: ${e && e.message ? e.message : e}`;
   }
@@ -1488,6 +1613,7 @@ async function saveLogsPlain(){
     localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
     const now = new Date();
     $('status').textContent = `最終保存 ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}(この端末に保存)`;
+    pushLogsToCloud();
   }catch(e){
     $('status').textContent = `⚠️ 保存エラー: ${e && e.message ? e.message : e}`;
   }
@@ -1851,6 +1977,7 @@ $('setupStart').onclick = async ()=>{
   }
   DOGS = newDogs;
   saveDogsConfig();
+  pushDogsToCloud();
   $('setupScreen').style.display = 'none';
   document.querySelector('header').style.display = '';
   document.querySelector('main').style.display = '';
@@ -1911,6 +2038,7 @@ $('manageSaveBtn').onclick = async ()=>{
 
   DOGS = finalDogs;
   saveDogsConfig();
+  pushDogsToCloud();
   await saveLogsPlain();
   if(!DOGS.find(d=>d.id===activeDog)){
     activeDog = DOGS[0].id;
@@ -1921,11 +2049,26 @@ $('manageSaveBtn').onclick = async ()=>{
 
 (async ()=>{
   applyI18n();
-  const ready = initDogs();
+  await initCloudSync();
+  let ready = initDogs();
+  if(!ready){
+    ready = await tryAdoptFromCloud();
+  }
+  attachCloudListeners();
   if(ready){
     activeDog = DOGS[0].id;
     await loadLogs();
     renderAll();
+    // クラウドにまだ犬リストが無い場合(=このアプリを初めてクラウド対応
+    // させた時)は、この端末の内容を初期データとしてアップロードする。
+    // 犬リストが既にクラウドにある場合は、うっかり上書きしないよう触らない。
+    if(fbReady && dogsRef){
+      try{
+        const snap = await dogsRef.once('value');
+        if(!snap.exists()) await pushDogsToCloud();
+      }catch(e){}
+    }
+    pushLogsToCloud();
   }else{
     showSetupScreen();
   }
