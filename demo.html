@@ -1377,7 +1377,7 @@ function toggleLang(){
 // (辞書・キャッシュはindex.html/demo.html共通。翻訳ヘルパーであって
 // 記録データではないので、demoデータのように分離する必要はない)
 const TRANSLATE_DICT_KEY = 'wanko-translate-dict-v1';
-const TRANSLATE_CACHE_KEY = 'wanko-translate-cache-v2'; // v1→v2: 辞書更新前の古い訳をリセットするため
+const TRANSLATE_CACHE_KEY = 'wanko-translate-cache-v3'; // v2→v3: 部分一致対応前に焼き付いた古い訳をリセットするため
 
 // よく使う単語はここに追加していくと、翻訳が安定し呼び出し回数も減る。
 // キーは完全一致(前後の空白はtrimして比較)。
@@ -1420,28 +1420,30 @@ async function translateJaToEs(text){
   const dict = loadEsDict();
   if(dict[trimmed]) return {text: dict[trimmed], source:'dict'};
 
-  const cache = loadTranslateCache();
-  if(cache[trimmed]) return {text: cache[trimmed], source:'cache'};
-
-  // 部分一致: メモの中に辞書の単語が含まれている場合(例:「駆虫薬
-  // nexgard spectra」のように商品名などと一緒に書かれている場合)、
-  // 先にその部分だけ辞書の訳語へ置き換えてからAPIに渡す。長い語から
-  // 順にマッチさせることで、部分的にかぶる語がある場合の誤置換を防ぐ。
+  // 部分一致(辞書の単語がメモの中に含まれている場合)は、キャッシュより
+  // 先に試す。そうしないと、辞書を追加・更新する前に一度キャッシュされて
+  // しまった古い訳がいつまでも優先されてしまう。
   let queryText = trimmed;
+  let dictApplied = false;
   const dictKeys = Object.keys(dict).sort((a,b)=> b.length - a.length);
   for(const key of dictKeys){
     if(queryText.includes(key)){
       queryText = queryText.split(key).join(dict[key]);
+      dictApplied = true;
     }
   }
   // 置き換え後に日本語(ひらがな・カタカナ・漢字)が残っていなければ、
   // もう翻訳の必要はない(=辞書の語+商品名などの英数字だけになった)。
   const hasJapanese = /[\u3040-\u30ff\u3400-\u9fff]/.test(queryText);
-  if(!hasJapanese){
-    cache[trimmed] = queryText;
-    saveTranslateCache(cache);
+  if(dictApplied && !hasJapanese){
     return {text: queryText, source:'dict'};
   }
+
+  // 辞書を部分適用した場合は、置き換え後の文字列をキャッシュキーにする
+  // (元のメモ文をキーにすると、辞書追加前の古いキャッシュと衝突するため)。
+  const cacheKey = dictApplied ? queryText : trimmed;
+  const cache = loadTranslateCache();
+  if(cache[cacheKey]) return {text: cache[cacheKey], source:'cache'};
 
   // ① Google翻訳(非公式エンドポイント)。仕様変更やCORS制限で
   // 落ちることがあるため、必ずtry/catchで②へフォールバックする。
@@ -1452,7 +1454,7 @@ async function translateJaToEs(text){
       const data = await res.json();
       const translated = (data[0]||[]).map(seg=>seg[0]).join('');
       if(translated){
-        cache[trimmed] = translated;
+        cache[cacheKey] = translated;
         saveTranslateCache(cache);
         return {text: translated, source:'api'};
       }
@@ -1467,7 +1469,7 @@ async function translateJaToEs(text){
       const data = await res.json();
       const translated = data && data.responseData && data.responseData.translatedText;
       if(translated){
-        cache[trimmed] = translated;
+        cache[cacheKey] = translated;
         saveTranslateCache(cache);
         return {text: translated, source:'api'};
       }
