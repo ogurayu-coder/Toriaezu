@@ -8,11 +8,17 @@ Hay un botón en la parte superior con la bandera 🇲🇽 **ES**. Al presionarl
 
 Las notas escritas a mano en japonés muestran además una traducción automática aproximada. **No es una traducción perfecta** — es solo una ayuda para entender la idea general. Si algo no queda claro, por favor pregúntele directamente a la persona dueña del perro.
 
+## Los registros se sincronizan automáticamente
+
+Lo que usted anota aquí aparece también en el teléfono del dueño/a, y viceversa — normalmente en cuestión de segundos. No hace falta crear ninguna cuenta ni iniciar sesión; basta con abrir el enlace que le compartieron.
+
+La sincronización necesita conexión a internet. Si está en una zona sin señal, puede seguir anotando con normalidad: lo que escriba se guarda en su teléfono y se envía automáticamente en cuanto vuelva a tener conexión.
+
 ## "No veo ningún registro" / "Parece vacío"
 
 Esto casi siempre se debe a una de estas causas, **no a que se hayan borrado los datos**:
 
-1. **Los datos se guardan solo en este teléfono**, no en internet ni en una cuenta. Si está viendo la app desde otro dispositivo o navegador, no aparecerán los registros de este teléfono.
+1. **Es la primera vez que abre la app en este teléfono y no hay conexión a internet en ese momento.** En cuanto haya señal, los registros del dueño/a se cargan automáticamente; puede tardar unos segundos.
 2. **Modo privado de Safari**: si el navegador está en modo privado/incógnito, la app no puede guardar ni recordar nada, y todo se ve vacío. Hay que salir del modo privado.
 3. Puede que el perro seleccionado (arriba, con las fotos/iconos) no sea el correcto. Con varios perros, hay que tocar el perro correspondiente para ver su historial.
 
