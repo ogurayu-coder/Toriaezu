@@ -870,7 +870,7 @@ function renderTimeline(){
   if(query){
     let all = [];
     DOGS.forEach(dog=>{
-      (logs[dog.id]||[]).forEach(e=>{
+      visibleEntries(logs[dog.id]).forEach(e=>{
         all.push({...e, dogId: dog.id});
       });
     });
@@ -922,7 +922,7 @@ function renderTimeline(){
     return;
   }
 
-  const entries = (logs[activeDog]||[]).slice().sort((a,b)=> b.at.localeCompare(a.at));
+  const entries = visibleEntries(logs[activeDog]).slice().sort((a,b)=> b.at.localeCompare(a.at));
   if(entries.length===0){
     wrap.innerHTML = '<div class="empty">まだ記録がありません。上のボタンから記録してみましょう。</div>';
     return;
@@ -960,7 +960,7 @@ function renderTimeline(){
     btn.onclick = async ()=>{
       const id = btn.dataset.id;
       await withFreshLogs(()=>{
-        logs[activeDog] = (logs[activeDog]||[]).filter(e=>e.id!==id);
+        markDeleted(logs[activeDog], id);
       });
       renderTimeline();
       renderCalendar();
@@ -1033,7 +1033,7 @@ function renderCalendar(){
 
   for(let d=1; d<=daysInMonth; d++){
     const dateStr = `${y}-${pad2(m+1)}-${pad2(d)}`;
-    const entries = (logs[activeDog]||[]).filter(e=>e.at.slice(0,10)===dateStr);
+    const entries = visibleEntries(logs[activeDog]).filter(e=>e.at.slice(0,10)===dateStr);
     const noteEntries = entries.filter(e=>e.type==='note' && e.text);
     const hasNote = noteEntries.length>0;
     // 日本語モードは原文の頭3文字、スペイン語モードは訳文の頭5文字
@@ -1103,7 +1103,7 @@ async function fillEsTranslations(rootEl){
 function renderDayEntries(dateStr){
   const wrap = $('dayEntries');
   wrap.innerHTML = '';
-  const entries = (logs[activeDog]||[]).filter(e=>e.at.slice(0,10)===dateStr).sort((a,b)=>a.at.localeCompare(b.at));
+  const entries = visibleEntries(logs[activeDog]).filter(e=>e.at.slice(0,10)===dateStr).sort((a,b)=>a.at.localeCompare(b.at));
   if(entries.length===0){
     wrap.innerHTML = '<div class="empty">この日の記録はまだありません。</div>';
     return;
@@ -1129,7 +1129,7 @@ function renderDayEntries(dateStr){
     btn.onclick = async ()=>{
       const id = btn.dataset.id;
       await withFreshLogs(()=>{
-        logs[activeDog] = (logs[activeDog]||[]).filter(e=>e.id!==id);
+        markDeleted(logs[activeDog], id);
       });
       renderDayEntries(dateStr);
       renderCalendar();
@@ -1629,16 +1629,42 @@ async function loadLogs(){
 // Union-merge two {dogId: [entries]} objects by entry id, so a save from
 // a stale tab can never silently erase entries that another tab already
 // persisted.
+// 記録の削除は物理削除(配列から除去)ではなく、deleted:trueを立てる
+// だけの「トゥームストーン」方式にしている。理由: マージはID単位の
+// 和集合(UNION)なので、配列からただ取り除くと、まだ削除前のコピーを
+// 持っている側(クラウドや他タブ)と同期するたびに復活してしまう
+// (✕で消したはずの駆虫薬メモが何度も生き返っていたのはこれが原因)。
+// このアプリに記録の「編集」機能は無く、削除以外で同じidの内容が
+// 後から変わることは無いので、同じidが両方にあれば常に削除側を
+// 優先して問題ない。
 function mergeLogs(a, b){
   const result = {};
   const dogIds = new Set([...Object.keys(a||{}), ...Object.keys(b||{})]);
   dogIds.forEach(id=>{
     const byId = new Map();
     (a[id]||[]).forEach(e=>byId.set(e.id, e));
-    (b[id]||[]).forEach(e=>byId.set(e.id, e));
+    (b[id]||[]).forEach(e=>{
+      const other = byId.get(e.id);
+      if(other && (other.deleted || e.deleted)){
+        byId.set(e.id, other.deleted ? other : e);
+      } else {
+        byId.set(e.id, e);
+      }
+    });
     result[id] = Array.from(byId.values());
   });
   return result;
+}
+
+// 削除フラグを立てる(トゥームストーン化)。配列からは取り除かない。
+function markDeleted(arr, id){
+  const e = (arr||[]).find(x=>x.id===id);
+  if(e){ e.deleted = true; e.deletedAt = Date.now(); }
+}
+
+// 表示・検索用: 削除済み(トゥームストーン)を除いた記録一覧。
+function visibleEntries(arr){
+  return (arr||[]).filter(e=>!e.deleted);
 }
 
 async function saveLogs(){
