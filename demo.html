@@ -828,9 +828,10 @@ function fmtDayLabel(dateStr){
   const d = new Date(dateStr+'T00:00:00');
   const today = todayStr();
   const y = localDateStr(new Date(Date.now()-86400000));
-  if(dateStr===today) return '今日';
-  if(dateStr===y) return '昨日';
-  return d.toLocaleDateString('ja-JP',{month:'numeric',day:'numeric',weekday:'short'});
+  if(dateStr===today) return LANG==='es' ? 'Hoy' : '今日';
+  if(dateStr===y) return LANG==='es' ? 'Ayer' : '昨日';
+  const locale = LANG==='es' ? 'es-ES' : 'ja-JP';
+  return d.toLocaleDateString(locale,{month:'numeric',day:'numeric',weekday:'short'});
 }
 
 function renderTags(){
