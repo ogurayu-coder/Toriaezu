@@ -1393,6 +1393,18 @@ async function pushDogsToCloud(){
   }
 }
 
+// バックアップ復元専用: クラウド上の現在値とはマージせず、この端末の
+// logs(=復元した内容)でクラウド側を完全に置き換える。通常保存
+// (pushLogsToCloud)はマージすることで他デバイスの未取り込み分を守るが、
+// 復元の目的は「クラウド上の意図しない変更(獣医のテスト書き込み等)を
+// 含めて、バックアップの状態に戻す」ことなので、ここだけは上書き。
+async function pushLogsToCloudOverwrite(){
+  if(!fbReady || !logsRef) return;
+  try{ await logsRef.set(logs); }catch(e){
+    console.warn('クラウドへの上書き同期に失敗しました(この端末には保存済みです):', e);
+  }
+}
+
 // --- 言語切り替え(日本語⇔スペイン語) -------------------------------
 // UI表示テキストだけを切り替える仕組み。記録データ(dog.subの注意書きや
 // 各エントリのメモ)はユーザーが打った生テキストなので、ここでは翻訳し
@@ -1436,6 +1448,7 @@ const I18N = {
     earsLabel: '耳の形',
     colorLabel: '毛色・柄',
     extraLabel: '追加の模様(自由に組み合わせ可)',
+    feedbackBtn: '📝 ご意見はこちら',
   },
   es: {
     setupTitle: '🐾 ¡Bienvenido a Wanko Note!',
@@ -1469,6 +1482,7 @@ const I18N = {
     earsLabel: 'Orejitas',
     colorLabel: 'Color',
     extraLabel: 'Opciones',
+    feedbackBtn: '📝 Tu opinión aquí',
   },
 };
 
@@ -1791,7 +1805,9 @@ $('backupCopyBtn').onclick = async ()=>{
         throw new Error('unexpected backup format');
       }
       if(DOGS.length===0){
-        await saveLogsPlain();
+        try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(logs)); }catch(e){}
+        await pushLogsToCloudOverwrite();
+        await pushDogsToCloud();
         $('backupPanel').style.display = 'none';
         location.reload();
         return;
@@ -1801,9 +1817,18 @@ $('backupCopyBtn').onclick = async ()=>{
       }
       renderAll();
       $('backupPanelLabel').textContent = (LANG==='es')
-        ? 'Restaurado. Intentando guardar…'
-        : '復元しました。保存も試みます…';
-      await saveLogsPlain();
+        ? 'Restaurado. Sincronizando (reemplazando la nube por este respaldo)…'
+        : '復元しました。クラウドをこのバックアップの内容で上書き中…';
+      // ここは意図的にsaveLogsPlain()(マージして保存)を使わない。
+      // 復元は「クラウド上の現状(獣医のテスト書き込み等を含む)を、
+      // このバックアップの内容で置き換える」操作なので、上書き専用の
+      // pushLogsToCloudOverwrite()で送る。
+      try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(logs)); }catch(e){}
+      await pushLogsToCloudOverwrite();
+      await pushDogsToCloud();
+      $('backupPanelLabel').textContent = (LANG==='es')
+        ? 'Restaurado y sincronizado.'
+        : '復元とクラウドへの反映が完了しました。';
       $('backupPanel').style.display = 'none';
     }catch(e){
       $('backupPanelLabel').textContent = (LANG==='es')
@@ -2052,6 +2077,23 @@ $('setupStart').onclick = async ()=>{
     alert('少なくとも1匹、名前を入力してください。');
     return;
   }
+  // クラウドに既に犬リストが存在する場合、無条件で上書きしない。
+  // (通信が遅くtryAdoptFromCloudが間に合わなかっただけで、実際には
+  // 別の端末に本物のデータがある可能性があるため。ここで確認なしに
+  // pushDogsToCloud()すると、その本物のデータをテスト用の内容で
+  // 消してしまう。)
+  if(fbReady && dogsRef){
+    try{
+      const snap = await dogsRef.once('value');
+      const remote = snap.val();
+      if(remote && Array.isArray(remote) && remote.length){
+        const ok = confirm((LANG==='es')
+          ? 'Ya existen perritos guardados en la nube (posiblemente en otro dispositivo). Si continúas, se reemplazarán por los que acabas de escribir aquí. ¿Seguro que quieres continuar? (Si no estás seguro, cancela y espera a que se sincronice con buena conexión a internet.)'
+          : 'クラウドに既に犬のデータがあります(別の端末の本物のデータの可能性があります)。続けると、それがここで入力した内容に置き換わります。本当に続けますか?(不安な場合はキャンセルして、電波の良い場所で少し待ってから開き直してください。)');
+        if(!ok) return;
+      }
+    }catch(e){ /* クラウド確認に失敗した場合はそのまま進める */ }
+  }
   DOGS = newDogs;
   saveDogsConfig();
   pushDogsToCloud();
@@ -2175,5 +2217,31 @@ window.addEventListener('pageshow', ()=>{
   }
 });
 
+</script>
+<a href="https://forms.gle/s97kzuBfatnangPs5" target="_blank" rel="noopener" id="feedbackBtn" data-i18n="feedbackBtn" style="
+  position:fixed;
+  bottom:16px;
+  right:16px;
+  background-color:#ff8fab;
+  color:#fff;
+  padding:10px 16px;
+  border-radius:24px;
+  text-decoration:none;
+  font-family:'Inter',sans-serif;
+  font-size:13px;
+  font-weight:600;
+  box-shadow:0 2px 8px rgba(0,0,0,.25);
+  z-index:40;
+">📝 ご意見はこちら</a>
+<script>
+  // メインスクリプトのapplyI18n()はこの要素より前で1度実行されるため、
+  // 初回表示がスペイン語スタートの場合に間に合わないことがある。
+  // ここで到着時点のLANGを見て即座に補正する。
+  try{
+    var _fb = document.getElementById('feedbackBtn');
+    if(_fb && typeof LANG !== 'undefined' && LANG === 'es'){
+      _fb.textContent = '📝 Tu opinión aquí';
+    }
+  }catch(e){}
 </script>
 </body></html>
