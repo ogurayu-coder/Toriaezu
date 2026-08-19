@@ -11,13 +11,13 @@ La app funciona solo en el navegador, y los registros se guardan dentro de ese m
 | Archivo | Uso | URL |
 |---|---|---|
 | `demo.html` | **La versión principal, la que usa todo el mundo.** Guarda los registros de tu propio perro en tu propio dispositivo | https://ogurayu-coder.github.io/Toriaezu/demo.html |
-| `index.html` | Página personal de Mo, usada solo para guardar un respaldo en la nube | https://ogurayu-coder.github.io/Toriaezu |
+| `index.html` | Versión de sincronización en la nube de Mo. Se usa solo cuando Mo y el veterinario necesitan compartir los registros durante un viaje | https://ogurayu-coder.github.io/Toriaezu |
 
 `index.html` y `demo.html` guardan los datos con claves distintas, así que aunque se abran ambos en el mismo dispositivo, los datos no se mezclan.
 
 ### ⚠️ Sobre `index.html` (importante)
 
-`index.html` es una página personal que Mo usa para guardar un respaldo en la nube (Firebase). **Por favor, si no eres Mo, no abras esta página ni anotes nada ahí.** Cualquier cambio ahí afecta directamente a los datos reales de Mo en la nube, y podría borrarlos o sobrescribirlos. El enlace que se comparte con amigos o con el veterinario siempre debe ser el de `demo.html`.
+`index.html` es la versión que sincroniza con la nube (Firebase), y **se usa solo durante los viajes, cuando Mo y el veterinario necesitan compartir los mismos registros. Para tus propios registros, siempre usa `demo.html`.** Escribir en `index.html` afecta directamente los datos reales de Mo en la nube, así que no escribas ahí, salvo que seas el veterinario de Mo registrando algo durante su viaje (verla está bien, no hay problema).
 
 ---
 
@@ -31,15 +31,11 @@ La app funciona solo en el navegador, y los registros se guardan dentro de ese m
 
 ---
 
-## Cuando se quiere mostrar los registros al veterinario (por ejemplo, en un viaje)
+## Cuando Mo viaja
 
-No se usa la sincronización en la nube de `index.html`. En su lugar, se comparte así, cada vez que hace falta:
+Durante el viaje de Mo se usa `index.html` (la versión con sincronización en la nube). Cuando Mo y su veterinario abren el mismo enlace de `index.html`, los registros se sincronizan automáticamente a través de Firebase, así que no hace falta copiar y pegar el respaldo cada vez. Al terminar el viaje, se vuelve a usar `demo.html` para el uso diario normal.
 
-1. Antes del viaje, Mo abre `demo.html`, toca "Ver respaldo" y copia el contenido
-2. Le comparte al veterinario el enlace de `demo.html` y ese texto de respaldo (lo más seguro es pegarlo directamente en el cuerpo de un correo)
-3. El veterinario abre `demo.html` en su propio dispositivo y pega el texto en "Restaurar respaldo"
-
-Así el veterinario ve los mismos registros en su dispositivo. Es un paso extra, pero lo que el veterinario haga en su dispositivo nunca afecta a los datos reales de Mo.
+**Este método es exclusivo de Mo.**
 
 ---
 
@@ -95,7 +91,7 @@ Basta con compartir el enlace de `demo.html`. No hace falta ninguna cuenta de Gi
 - Corregido un error por el que los registros borrados volvían a aparecer
 - Ahora se puede elegir la cantidad de perritos y su apariencia (forma de orejas, patrón, color)
 - Función para agregar, editar y borrar cada perrito, e inclusión de la lista de perritos en el respaldo
-- `index.html` pasó a ser de uso exclusivo de Mo como respaldo en la nube; `demo.html` quedó como la versión principal que usa todo el mundo
+- `index.html` quedó como la versión de sincronización que Mo y el veterinario usan durante los viajes; `demo.html` sigue siendo la versión principal para el uso diario de todos
 
 ---
 
