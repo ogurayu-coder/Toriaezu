@@ -416,6 +416,9 @@
     <button id="restoreBtn" data-i18n="restoreBtn" style="flex:1;font-size:11px;padding:8px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink-soft);cursor:pointer;">バックアップを復元</button>
   </div>
   <div style="margin-bottom:8px;">
+    <button id="vaccineMenuBtn" data-i18n="vaccineMenuBtn" style="width:100%;font-size:12px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-weight:600;cursor:pointer;">💉 ワクチン・駆虫</button>
+  </div>
+  <div style="margin-bottom:8px;">
     <button id="manageDogsBtn" data-i18n="manageDogsBtn" style="width:100%;font-size:12px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-weight:600;cursor:pointer;">🐾 犬を管理(追加・編集・削除)</button>
   </div>
   <div style="margin-bottom:14px;">
@@ -449,10 +452,28 @@
     <h2><span id="sheetIcon"></span><span id="sheetTitle"></span></h2>
     <input type="time" id="entryTime">
     <div class="chiprow" id="chiprow"></div>
+    <div id="nextDueWrap" style="display:none;margin:8px 0;">
+      <label for="entryNextDue" data-i18n="nextDueLabel" style="display:block;font-size:12px;color:var(--ink-soft);margin-bottom:4px;">次回予定日(任意)</label>
+      <input type="date" id="entryNextDue" style="width:100%;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-family:'Inter',sans-serif;font-size:13px;">
+    </div>
     <textarea id="entryText" data-i18n-placeholder="entryMemoPlaceholder" placeholder="メモ(任意)"></textarea>
     <div class="actions">
       <button class="cancel" id="cancelBtn" data-i18n="entryCancelBtn">やめる</button>
       <button class="save" id="saveBtn" data-i18n="entrySaveBtn">記録する</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="vaccineOverlay">
+  <div class="sheet">
+    <h2 data-i18n="vaccineOverlayTitle">💉 ワクチン・駆虫の記録</h2>
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <button id="vaccineRecordBtn" data-i18n="vaccineRecordBtn" style="flex:1;font-size:12px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-weight:600;cursor:pointer;">💉 ワクチンを記録</button>
+      <button id="dewormRecordBtn" data-i18n="dewormRecordBtn" style="flex:1;font-size:12px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-weight:600;cursor:pointer;">🐛 駆虫・フィラリアを記録</button>
+    </div>
+    <div id="vaccineScheduleBody"></div>
+    <div class="actions">
+      <button class="cancel" id="vaccineCloseBtn" data-i18n="closeBtn">閉じる</button>
     </div>
   </div>
 </div>
@@ -757,6 +778,8 @@ const TYPES = {
   walk: {label:'散歩', icon:'<svg viewBox="0 0 24 24" fill="currentColor"><ellipse cx="12" cy="17" rx="5.3" ry="4.1"/><ellipse cx="5.6" cy="10.3" rx="2.1" ry="2.7"/><ellipse cx="9.7" cy="5.8" rx="2" ry="2.6"/><ellipse cx="14.3" cy="5.8" rx="2" ry="2.6"/><ellipse cx="18.4" cy="10.3" rx="2.1" ry="2.7"/></svg>', color:'var(--walk)', chips:['近所ひと回り','長め','元気いっぱい','疲れ気味']},
   poop: {label:'うんち', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20h6a3 3 0 0 0 0-6 3 3 0 0 0-1-5.7A3 3 0 1 0 8.3 7c0 1 .3 1.8.9 2.4A3 3 0 0 0 9 14a3 3 0 0 0 0 6Z"/></svg>', color:'var(--poop)', chips:['普通','やわらかめ','硬め','下痢','血が混じる']},
   med:  {label:'お薬', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="8.7" width="17" height="6.6" rx="3.3" transform="rotate(-30 12 12)"/><line x1="12" y1="6.9" x2="12" y2="17.1" transform="rotate(-30 12 12)"/></svg>', color:'var(--med)', chips:[]},
+  vaccine: {label:'ワクチン', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="18.5" y1="2" x2="22" y2="5.5"/><line x1="17" y1="7" x2="7" y2="17"/><rect x="3" y="15.5" width="6" height="6" rx="1.2" transform="rotate(-45 6 18.5)"/><line x1="10.5" y1="6.5" x2="13.5" y2="9.5"/><line x1="13.5" y1="3.5" x2="16.5" y2="6.5"/></svg>', color:'var(--med)', chips:['狂犬病','混合(5種)','混合(8種)','混合(10種)','その他']},
+  deworm: {label:'駆虫・フィラリア', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>', color:'var(--med)', chips:['ノミ・マダニ','フィラリア予防','回虫・条虫など','その他']},
   note: {label:'気になったこと', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l.9-3.9L15.6 5.4a1.9 1.9 0 0 1 2.7 0l.3.3a1.9 1.9 0 0 1 0 2.7L8 19l-4 1Z"/><path d="M14.3 6.7l3 3"/></svg>', color:'var(--note)', chips:[]},
 };
 
@@ -772,6 +795,8 @@ const TYPE_LABEL_ES = {
   poop: 'Popó',
   med: 'Medicina',
   note: 'Nota',
+  vaccine: 'Vacuna',
+  deworm: 'Desparasitación',
 };
 const CHIP_ES_MAP = {
   meal: {'完食':'Comió todo','少し残した':'Dejó un poco','半分':'Comió la mitad','食べず':'No comió'},
@@ -780,6 +805,8 @@ const CHIP_ES_MAP = {
   poop: {'普通':'Normal','やわらかめ':'Blanda','硬め':'Dura','下痢':'Diarrea','血が混じる':'Con sangre'},
   med: {},
   note: {},
+  vaccine: {'狂犬病':'Rabia','混合(5種)':'Múltiple (5 en 1)','混合(8種)':'Múltiple (8 en 1)','混合(10種)':'Múltiple (10 en 1)','その他':'Otra'},
+  deworm: {'ノミ・マダニ':'Pulgas y garrapatas','フィラリア予防':'Prevención de filaria','回虫・条虫など':'Lombrices/tenia','その他':'Otro'},
 };
 
 // 種別ラベル(ごはん/Comida等)を現在の言語で返す
@@ -803,6 +830,7 @@ let logs = {}; // {dogId: [entries]}
 let pendingType = null;
 let pendingChip = null;
 let pendingDate = null;
+let pendingReturnToVaccine = false;
 let currentDayDate = null;
 let calState = (()=>{ const d=new Date(); return {year:d.getFullYear(), month:d.getMonth()}; })();
 
@@ -981,6 +1009,7 @@ function renderAll(){
   renderHeader();
   renderTimeline();
   renderCalendar();
+  renderVaccineSchedule();
 }
 
 /* ---------- Calendar ---------- */
@@ -1194,11 +1223,19 @@ function openSheet(type, dateOverride){
     };
     chiprow.appendChild(chip);
   });
+  const nextDueWrap = $('nextDueWrap');
+  const isVaccineType = (type==='vaccine' || type==='deworm');
+  nextDueWrap.style.display = isVaccineType ? 'block' : 'none';
+  $('entryNextDue').value = '';
   $('overlay').classList.add('show');
 }
 
 function closeSheet(){
   $('overlay').classList.remove('show');
+  if(pendingReturnToVaccine){
+    pendingReturnToVaccine = false;
+    openVaccineOverlay();
+  }
 }
 
 // Reads the latest saved data fresh from storage, applies `mutator` to it,
@@ -1224,12 +1261,15 @@ async function saveEntry(){
   const time = $('entryTime').value || new Date().toTimeString().slice(0,5);
   const text = $('entryText').value.trim();
   const date = pendingDate || todayStr();
+  const isVaccineType = (pendingType==='vaccine' || pendingType==='deworm');
+  const nextDue = isVaccineType ? ($('entryNextDue').value || null) : null;
   const entry = {
     id: Date.now().toString(36)+Math.random().toString(36).slice(2,6),
     type: pendingType,
     at: `${date}T${time}`,
     chip: pendingChip,
     text: text,
+    nextDue: nextDue,
   };
   await withFreshLogs(()=>{
     if(!logs[activeDog]) logs[activeDog]=[];
@@ -1449,6 +1489,21 @@ const I18N = {
     colorLabel: '毛色・柄',
     extraLabel: '追加の模様(自由に組み合わせ可)',
     feedbackBtn: '📝 ご意見はこちら',
+    vaccineMenuBtn: '💉 ワクチン・駆虫',
+    vaccineOverlayTitle: '💉 ワクチン・駆虫の記録',
+    vaccineRecordBtn: '💉 ワクチンを記録',
+    dewormRecordBtn: '🐛 駆虫・フィラリアを記録',
+    nextDueLabel: '次回予定日(任意)',
+    lastDoneLabel: '最終記録',
+    nextDueDisplayLabel: '次回予定',
+    noRecordYet: 'まだ記録がありません',
+    noNextDueSet: '次回予定日は未設定',
+    statusOverdue: '⚠️ 期限を過ぎています',
+    statusSoon: '🔶 そろそろです',
+    statusOk: '✅ 余裕があります',
+    historyLabel: '過去の記録',
+    vaccineSectionTitle: 'ワクチン',
+    dewormSectionTitle: '駆虫・フィラリア',
   },
   es: {
     setupTitle: '🐾 ¡Bienvenido a Wanko Note!',
@@ -1483,6 +1538,21 @@ const I18N = {
     colorLabel: 'Color',
     extraLabel: 'Opciones',
     feedbackBtn: '📝 Tu opinión aquí',
+    vaccineMenuBtn: '💉 Vacunas y desparasitación',
+    vaccineOverlayTitle: '💉 Vacunas y desparasitación',
+    vaccineRecordBtn: '💉 Registrar vacuna',
+    dewormRecordBtn: '🐛 Registrar desparasitación/filaria',
+    nextDueLabel: 'Próxima fecha (opcional)',
+    lastDoneLabel: 'Último registro',
+    nextDueDisplayLabel: 'Próxima fecha',
+    noRecordYet: 'Todavía no hay registros',
+    noNextDueSet: 'Sin próxima fecha definida',
+    statusOverdue: '⚠️ Fecha vencida',
+    statusSoon: '🔶 Se acerca la fecha',
+    statusOk: '✅ Sin urgencia',
+    historyLabel: 'Historial',
+    vaccineSectionTitle: 'Vacunas',
+    dewormSectionTitle: 'Desparasitación/filaria',
   },
 };
 
@@ -2114,6 +2184,102 @@ $('setupStart').onclick = async ()=>{
   activeDog = DOGS[0].id;
   await loadLogs();
   renderAll();
+};
+
+/* ---------- Vaccine / deworming schedule -----------------------------
+   獣医さんからのフィードバック: 予防接種の記録は1ヶ月単位のカレンダーで
+   見ても意味がなく、数ヶ月〜1年単位で「最後にいつやったか」「次はいつか」
+   が分かればいい。なので月表示のカレンダーとは別に、全期間から最新の
+   記録をひとつだけ取り出して表示する専用画面を用意する。 -------------- */
+
+function fmtFullDate(dateStr){
+  if(!dateStr) return '';
+  const d = new Date(dateStr+'T00:00:00');
+  const locale = LANG==='es' ? 'es-ES' : 'ja-JP';
+  return d.toLocaleDateString(locale, {year:'numeric', month:'long', day:'numeric'});
+}
+
+// 次回予定日と今日を比べて、期限切れ/そろそろ/余裕ありの3段階を返す
+function dueStatus(nextDue){
+  if(!nextDue) return null;
+  const today = todayStr();
+  const diffDays = Math.round((new Date(nextDue+'T00:00:00') - new Date(today+'T00:00:00')) / 86400000);
+  if(diffDays < 0) return 'overdue';
+  if(diffDays <= 30) return 'soon';
+  return 'ok';
+}
+
+function renderVaccineTypeSection(typeKey){
+  const ty = TYPES[typeKey];
+  const all = visibleEntries(logs[activeDog]).filter(e=>e.type===typeKey).slice().sort((a,b)=> b.at.localeCompare(a.at));
+  const last = all[0];
+  const title = typeKey==='vaccine' ? t('vaccineSectionTitle') : t('dewormSectionTitle');
+
+  let statusBody;
+  if(last){
+    const st = last.nextDue ? dueStatus(last.nextDue) : null;
+    const statusColor = st==='overdue' ? '#B3473A' : (st==='soon' ? '#C98A1F' : '#3A7D44');
+    const statusText = st==='overdue' ? t('statusOverdue') : (st==='soon' ? t('statusSoon') : (st==='ok' ? t('statusOk') : ''));
+    statusBody = `
+      <div style="font-size:12px;color:var(--ink-soft);">${t('lastDoneLabel')}: ${fmtFullDate(last.at.slice(0,10))}${last.chip ? ' · '+escapeHtml(chipLabel(typeKey,last.chip)) : ''}</div>
+      <div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">${t('nextDueDisplayLabel')}: ${last.nextDue ? fmtFullDate(last.nextDue) : t('noNextDueSet')}</div>
+      ${st ? `<div style="font-size:12px;font-weight:700;color:${statusColor};margin-top:4px;">${statusText}</div>` : ''}
+    `;
+  } else {
+    statusBody = `<div style="font-size:12px;color:var(--ink-soft);">${t('noRecordYet')}</div>`;
+  }
+
+  const historyBody = all.length ? `
+    <details style="margin-top:10px;">
+      <summary style="font-size:12px;color:var(--ink-soft);cursor:pointer;">${t('historyLabel')} (${all.length})</summary>
+      <div style="margin-top:6px;display:flex;flex-direction:column;gap:6px;">
+        ${all.map(e=>`
+          <div style="font-size:12px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;">
+            <div style="font-weight:600;">${fmtFullDate(e.at.slice(0,10))}${e.chip ? ' · '+escapeHtml(chipLabel(typeKey,e.chip)) : ''}</div>
+            ${e.nextDue ? `<div style="color:var(--ink-soft);">${t('nextDueDisplayLabel')}: ${fmtFullDate(e.nextDue)}</div>` : ''}
+            ${e.text ? `<div style="color:var(--ink-soft);margin-top:2px;">${escapeHtml(e.text)}</div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    </details>
+  ` : '';
+
+  return `
+    <div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px;background:var(--card);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <span style="width:20px;height:20px;color:var(--ink-soft);display:flex;">${ty.icon}</span>
+        <span style="font-weight:700;font-size:13px;">${title}</span>
+      </div>
+      ${statusBody}
+      ${historyBody}
+    </div>
+  `;
+}
+
+function renderVaccineSchedule(){
+  $('vaccineScheduleBody').innerHTML = renderVaccineTypeSection('vaccine') + renderVaccineTypeSection('deworm');
+}
+
+function openVaccineOverlay(){
+  renderVaccineSchedule();
+  $('vaccineOverlay').classList.add('show');
+}
+function closeVaccineOverlay(){
+  $('vaccineOverlay').classList.remove('show');
+}
+
+$('vaccineMenuBtn').onclick = openVaccineOverlay;
+$('vaccineCloseBtn').onclick = closeVaccineOverlay;
+$('vaccineOverlay').onclick = (e)=>{ if(e.target.id==='vaccineOverlay') closeVaccineOverlay(); };
+$('vaccineRecordBtn').onclick = ()=>{
+  closeVaccineOverlay();
+  pendingReturnToVaccine = true;
+  openSheet('vaccine');
+};
+$('dewormRecordBtn').onclick = ()=>{
+  closeVaccineOverlay();
+  pendingReturnToVaccine = true;
+  openSheet('deworm');
 };
 
 /* ---------- Manage dogs (add / edit / delete a single dog, without
