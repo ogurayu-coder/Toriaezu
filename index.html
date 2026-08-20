@@ -1501,6 +1501,17 @@ function applyI18n(){
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{
     el.placeholder = t(el.dataset.i18nPlaceholder);
   });
+  document.querySelectorAll('[data-i18n-title]').forEach(el=>{
+    el.title = t(el.dataset.i18nTitle);
+  });
+  // 犬登録/管理画面の行はJSで動的に作られ、耳の形・模様のラベルは
+  // data-i18n系の仕組みを通らずLANGの値をその場でHTMLに焼き込んで
+  // いた。そのため画面を開いたまま言語を切り替えると、そこだけ古い
+  // 言語のまま残る不具合があった。data-lbl-ja/esに両言語分を持たせて
+  // おき、ここで毎回LANGに合わせて選び直すことで直す。
+  document.querySelectorAll('[data-lbl-ja]').forEach(el=>{
+    el.textContent = (LANG === 'ja') ? (el.dataset.lblJa || '') : (el.dataset.lblEs || '');
+  });
   const FLAG_MX = '<svg viewBox="0 0 30 20" width="15" height="10" style="display:inline-block;vertical-align:-1px;border-radius:2px;overflow:hidden;"><rect width="30" height="20" fill="#fff"/><rect width="10" height="20" fill="#006341"/><rect x="20" width="10" height="20" fill="#CE1126"/></svg>';
   const FLAG_JP = '<svg viewBox="0 0 30 20" width="15" height="10" style="display:inline-block;vertical-align:-1px;border-radius:2px;overflow:hidden;"><rect width="30" height="20" fill="#fff"/><circle cx="15" cy="10" r="6" fill="#BC002D"/></svg>';
   const btnLabel = (LANG === 'ja') ? (FLAG_MX + ' ES(β)') : (FLAG_JP + ' JA');
@@ -1896,10 +1907,10 @@ function createDogRow(dog, opts){
   row.dataset.existingId = (dog && dog.id) ? dog.id : '';
   row.innerHTML = `
     <div class="setup-row-top">
-      <input type="text" class="setup-name" placeholder="${t('namePlaceholder')}" value="${dog ? escapeHtml(dog.name||'') : ''}">
-      <button type="button" class="setup-remove" title="${t('deleteTitle')}">${opts.showDelete ? '🗑' : '✕'}</button>
+      <input type="text" class="setup-name" data-i18n-placeholder="namePlaceholder" placeholder="${t('namePlaceholder')}" value="${dog ? escapeHtml(dog.name||'') : ''}">
+      <button type="button" class="setup-remove" data-i18n-title="deleteTitle" title="${t('deleteTitle')}">${opts.showDelete ? '🗑' : '✕'}</button>
     </div>
-    <input type="text" class="setup-sub" placeholder="${t('subPlaceholder')}" value="${dog ? escapeHtml(dog.sub||'') : ''}">
+    <input type="text" class="setup-sub" data-i18n-placeholder="subPlaceholder" placeholder="${t('subPlaceholder')}" value="${dog ? escapeHtml(dog.sub||'') : ''}">
     <div class="setup-field-label">${t('earsLabel')}</div>
     <div class="setup-styles setup-ears"></div>
     <div class="setup-field-label">${t('colorLabel')}</div>
@@ -1918,7 +1929,7 @@ function createDogRow(dog, opts){
     btn.type = 'button';
     btn.className = 'setup-style-btn' + (ep.key===currentEarsKey ? ' sel' : '');
     btn.dataset.ears = ep.key;
-    btn.innerHTML = `${earOnlyIconSVG(ep.ears,34)}<span class="lbl">${LANG === 'ja' ? ep.label : ''}</span>`;
+    btn.innerHTML = `${earOnlyIconSVG(ep.ears,34)}<span class="lbl" data-lbl-ja="${ep.label}" data-lbl-es="">${LANG === 'ja' ? ep.label : ''}</span>`;
     btn.onclick = ()=>{
       earsWrap.querySelectorAll('.setup-style-btn').forEach(b=>b.classList.remove('sel'));
       btn.classList.add('sel');
@@ -1984,7 +1995,7 @@ function createDogRow(dog, opts){
     btn.className = 'setup-style-btn setup-toggle-btn' + (isOn ? ' sel' : '');
     btn.dataset.markKey = mt.key;
     const previewDog = {coat: mt.previewCoat || GRAY, ears:'floppy', [mt.prop]: true, pattern:'solid'};
-    btn.innerHTML = `${dogIconSVG(previewDog,34)}<span class="lbl">${LANG==='es' ? mt.labelEs : mt.label}</span>`;
+    btn.innerHTML = `${dogIconSVG(previewDog,34)}<span class="lbl" data-lbl-ja="${mt.label}" data-lbl-es="${mt.labelEs}">${LANG==='es' ? mt.labelEs : mt.label}</span>`;
     btn.onclick = ()=>{
       const turningOn = !btn.classList.contains('sel');
       btn.classList.toggle('sel');
