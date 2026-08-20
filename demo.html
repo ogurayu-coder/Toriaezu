@@ -1748,11 +1748,11 @@ function createDogRow(dog, opts){
       <button type="button" class="setup-remove" data-i18n-title="deleteTitle" title="${t('deleteTitle')}">${opts.showDelete ? '🗑' : '✕'}</button>
     </div>
     <input type="text" class="setup-sub" data-i18n-placeholder="subPlaceholder" placeholder="${t('subPlaceholder')}" value="${dog ? escapeHtml(dog.sub||'') : ''}">
-    <div class="setup-field-label">${t('earsLabel')}</div>
+    <div class="setup-field-label" data-i18n="earsLabel">${t('earsLabel')}</div>
     <div class="setup-styles setup-ears"></div>
-    <div class="setup-field-label">${t('colorLabel')}</div>
+    <div class="setup-field-label" data-i18n="colorLabel">${t('colorLabel')}</div>
     <div class="setup-colors"></div>
-    <div class="setup-field-label">${t('extraLabel')}</div>
+    <div class="setup-field-label" data-i18n="extraLabel">${t('extraLabel')}</div>
     <div class="setup-toggles"></div>
   `;
 

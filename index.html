@@ -1326,7 +1326,7 @@ async function initCloudSync(){
   try{
     const appLoaded = await loadScriptWithTimeout(FB_SDK_BASE + 'firebase-app-compat.js', 4000);
     if(!appLoaded){
-      console.warn('クラウド同期の読み込みがタイムアウトしました(オフラインのまま動作します)');
+      console.warn(LANG==='es' ? 'La carga de la sincronización en la nube agotó el tiempo de espera (funcionando sin conexión)' : 'クラウド同期の読み込みがタイムアウトしました(オフラインのまま動作します)');
       return;
     }
     await Promise.all([
@@ -1334,7 +1334,7 @@ async function initCloudSync(){
       loadScriptWithTimeout(FB_SDK_BASE + 'firebase-database-compat.js', 4000),
     ]);
     if(typeof firebase === 'undefined' || !firebase.auth || !firebase.database){
-      console.warn('クラウド同期SDKの読み込みに失敗しました(オフラインのまま動作します)');
+      console.warn(LANG==='es' ? 'No se pudo cargar el SDK de sincronización en la nube (funcionando sin conexión)' : 'クラウド同期SDKの読み込みに失敗しました(オフラインのまま動作します)');
       return;
     }
 
@@ -1352,13 +1352,13 @@ async function initCloudSync(){
         finish();
       });
       auth.signInAnonymously().catch(e=>{
-        console.warn('クラウド同期用の匿名ログインに失敗しました(オフラインのまま動作します):', e);
+        console.warn(LANG==='es' ? 'Falló el inicio de sesión anónimo para la sincronización (funcionando sin conexión):' : 'クラウド同期用の匿名ログインに失敗しました(オフラインのまま動作します):', e);
         finish();
       });
       setTimeout(finish, 4000);
     });
   }catch(e){
-    console.warn('クラウド同期を初期化できませんでした(オフラインのまま動作します):', e);
+    console.warn(LANG==='es' ? 'No se pudo iniciar la sincronización en la nube (funcionando sin conexión):' : 'クラウド同期を初期化できませんでした(オフラインのまま動作します):', e);
   }
 }
 
@@ -1378,7 +1378,7 @@ async function tryAdoptFromCloud(){
     localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
     return true;
   }catch(e){
-    console.warn('クラウドからの取り込みに失敗しました:', e);
+    console.warn(LANG==='es' ? 'Falló la descarga desde la nube:' : 'クラウドからの取り込みに失敗しました:', e);
     return false;
   }
 }
@@ -1422,14 +1422,14 @@ async function pushLogsToCloud(){
     const merged = mergeLogs(remote, logs);
     await logsRef.set(merged);
   }catch(e){
-    console.warn('クラウドへの同期に失敗しました(この端末には保存済みです):', e);
+    console.warn(LANG==='es' ? 'Falló la sincronización con la nube (ya está guardado en este dispositivo):' : 'クラウドへの同期に失敗しました(この端末には保存済みです):', e);
   }
 }
 
 async function pushDogsToCloud(){
   if(!fbReady || !dogsRef) return;
   try{ await dogsRef.set(DOGS); }catch(e){
-    console.warn('犬リストのクラウド同期に失敗しました(この端末には保存済みです):', e);
+    console.warn(LANG==='es' ? 'Falló la sincronización de la lista de perritos con la nube (ya está guardada en este dispositivo):' : '犬リストのクラウド同期に失敗しました(この端末には保存済みです):', e);
   }
 }
 
@@ -1441,7 +1441,7 @@ async function pushDogsToCloud(){
 async function pushLogsToCloudOverwrite(){
   if(!fbReady || !logsRef) return;
   try{ await logsRef.set(logs); }catch(e){
-    console.warn('クラウドへの上書き同期に失敗しました(この端末には保存済みです):', e);
+    console.warn(LANG==='es' ? 'Falló la sincronización de sobrescritura con la nube (ya está guardado en este dispositivo):' : 'クラウドへの上書き同期に失敗しました(この端末には保存済みです):', e);
   }
 }
 
@@ -1504,6 +1504,8 @@ const I18N = {
     historyLabel: '過去の記録',
     vaccineSectionTitle: 'ワクチン',
     dewormSectionTitle: '駆虫・フィラリア',
+    alertNeedName: '少なくとも1匹、名前を入力してください。',
+    alertNeedOneDog: '少なくとも1匹は必要です。',
   },
   es: {
     setupTitle: '🐾 ¡Bienvenido a Wanko Note!',
@@ -1553,6 +1555,8 @@ const I18N = {
     historyLabel: 'Historial',
     vaccineSectionTitle: 'Vacunas',
     dewormSectionTitle: 'Desparasitación/filaria',
+    alertNeedName: 'Ingresa el nombre de al menos un perrito.',
+    alertNeedOneDog: 'Debe haber al menos un perrito.',
   },
 };
 
@@ -1597,6 +1601,7 @@ function toggleLang(){
   applyI18n();
   renderCalendar();
   renderTimeline();
+  renderVaccineSchedule();
   if(currentDayDate) renderDayEntries(currentDayDate);
 }
 
@@ -1981,11 +1986,11 @@ function createDogRow(dog, opts){
       <button type="button" class="setup-remove" data-i18n-title="deleteTitle" title="${t('deleteTitle')}">${opts.showDelete ? '🗑' : '✕'}</button>
     </div>
     <input type="text" class="setup-sub" data-i18n-placeholder="subPlaceholder" placeholder="${t('subPlaceholder')}" value="${dog ? escapeHtml(dog.sub||'') : ''}">
-    <div class="setup-field-label">${t('earsLabel')}</div>
+    <div class="setup-field-label" data-i18n="earsLabel">${t('earsLabel')}</div>
     <div class="setup-styles setup-ears"></div>
-    <div class="setup-field-label">${t('colorLabel')}</div>
+    <div class="setup-field-label" data-i18n="colorLabel">${t('colorLabel')}</div>
     <div class="setup-colors"></div>
-    <div class="setup-field-label">${t('extraLabel')}</div>
+    <div class="setup-field-label" data-i18n="extraLabel">${t('extraLabel')}</div>
     <div class="setup-toggles"></div>
   `;
 
@@ -2155,7 +2160,7 @@ $('setupStart').onclick = async ()=>{
     newDogs.push({ id: 'dog_' + Date.now().toString(36) + '_' + i, ...base });
   });
   if(newDogs.length===0){
-    alert('少なくとも1匹、名前を入力してください。');
+    alert(t('alertNeedName'));
     return;
   }
   // クラウドに既に犬リストが存在する場合、無条件で上書きしない。
@@ -2316,7 +2321,7 @@ $('manageSaveBtn').onclick = async ()=>{
     keptIds.add(id);
   });
   if(finalDogs.length===0){
-    alert('少なくとも1匹は必要です。');
+    alert(t('alertNeedOneDog'));
     return;
   }
   // Refresh logs fresh from storage before mutating, so we never clobber
