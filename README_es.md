@@ -77,8 +77,9 @@ Basta con compartir el enlace de `demo.html`. No hace falta ninguna cuenta de Gi
 ## Funciones principales
 
 - Registro de comida, paseo, popó, medicina y notas (con hora y comentario)
+- Registro de vacunas y desparasitación, con seguimiento del último registro y la próxima fecha (avisa con colores cuando se acerca el vencimiento)
 - Vista de calendario (para ver de un vistazo los días con alguna nota)
-- Búsqueda por nombre del perro, fecha o texto de la nota
+- Búsqueda por palabra libre (ej: vómito, convulsión), busca dentro del texto de las notas
 - Agregar registros de días pasados (tocando la fecha en el calendario)
 - Exportar y restaurar respaldos
 - Agregar, editar o borrar perritos desde "🐾 Administrar perritos"
