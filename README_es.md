@@ -2,7 +2,7 @@
 
 Es una app web sencilla para registrar la salud y el cuidado diario de un perro. Permite anotar en el momento comida, paseo, popó, medicina y cualquier cosa que llame la atención. Está pensada especialmente para poder consultar después "qué pasó ese día", sobre todo con perros mayores o con alguna condición médica.
 
-La app funciona solo en el navegador, y los registros se guardan dentro de ese mismo dispositivo (localStorage).
+La app funciona solo en el navegador. Los registros de `demo.html` se guardan solo en ese mismo dispositivo (localStorage). (`index.html` es la versión con sincronización en la nube, la excepción explicada más abajo).
 
 ---
 
@@ -23,6 +23,8 @@ La app funciona solo en el navegador, y los registros se guardan dentro de ese m
 
 ## Sobre cómo se guardan los datos (importante)
 
+**Lo que sigue es sobre `demo.html` (la versión principal). `index.html` sincroniza con la nube, así que no aplica (ver arriba).**
+
 - Los registros se guardan **solo en ese navegador, en ese dispositivo (localStorage)**. No se comparten automáticamente con otros dispositivos ni con la nube.
 - Aunque sea el mismo enlace, si el dispositivo es distinto (por ejemplo un iPhone y un iPad), los datos se guardan por separado.
 - **Si se abre en modo privado (incógnito), los datos desaparecen en cuanto se cierra la pestaña.** Para el uso normal, abrir siempre en modo normal de Safari.
@@ -41,7 +43,7 @@ Durante el viaje de Mo se usa `index.html` (la versión con sincronización en l
 
 ## Respaldo
 
-Desde "Ver respaldo" dentro de la app se puede exportar todo (registros + lista de perritos) como texto. Se recomienda copiarlo con una pulsación larga y guardarlo en una app de notas. Para restaurarlo, se pega ese mismo texto en "Restaurar respaldo".
+Desde "Ver respaldo" dentro de la app se puede exportar todo (registros + lista de perritos) como texto. Con solo presionar el botón "Copiar" se copia automáticamente; conviene guardarlo en una app de notas. Para restaurarlo, se pega ese mismo texto en "Restaurar respaldo".
 
 **Antes de agregar o borrar un perrito, o antes de usar "Borrar datos de sitios web" en el iPhone, siempre hay que sacar un respaldo primero.**
 
@@ -49,7 +51,7 @@ Desde "Ver respaldo" dentro de la app se puede exportar todo (registros + lista 
 
 Como localStorage guarda los datos por dispositivo, **no se transfieren automáticamente a uno nuevo.** Antes de cambiar de dispositivo, hay que mover el respaldo con estos pasos:
 
-1. En el dispositivo anterior, abrir la app → "Ver respaldo" → mantener presionado el texto, seleccionar todo → copiar
+1. En el dispositivo anterior, abrir la app → "Ver respaldo" → presionar "Copiar"
 2. Abrir un **correo dirigido a uno mismo**, pegar el texto tal cual en el cuerpo y enviarlo (no hace falta adjuntarlo como archivo; pegarlo en el cuerpo del correo es lo más seguro)
 3. En el dispositivo nuevo, abrir ese mismo correo y copiar el texto pegado
 4. En el dispositivo nuevo, abrir la app → "Restaurar respaldo" → pegar el texto
@@ -61,16 +63,6 @@ Si se salta este paso, el dispositivo nuevo empezará completamente vacío, sin 
 ## Comentarios y sugerencias
 
 Si encuentras algún error o tienes alguna idea de función nueva, puedes escribirla con confianza en este [formulario de Google](https://forms.gle/s97kzuBfatnangPs5). También son bienvenidos los [Issues](../../issues).
-
----
-
-## Si alguien más quiere usarla
-
-Basta con compartir el enlace de `demo.html`. No hace falta ninguna cuenta de GitHub.
-
-- La primera vez que se abre ese enlace, aparece una pantalla de **configuración inicial** ("¡Bienvenido a Wanko Note!"), donde se registra el nombre, la forma de orejas, el patrón y el color del perrito.
-- Una vez configurado, desde "🐾 Administrar perritos" dentro de la app se puede agregar, editar o borrar perritos en cualquier momento (nada se guarda hasta presionar "Guardar").
-- Los registros quedan guardados solo en el dispositivo de esa persona. Son completamente independientes de los datos de Mo.
 
 ---
 
