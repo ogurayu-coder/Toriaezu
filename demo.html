@@ -945,8 +945,8 @@ function renderTimeline(){
           <div class="ic" style="color:${t.color}">${t.icon}</div>
           <div class="body">
             <div class="time">${time} ・ <b style="color:${dog.color}">${dog.name}</b> ・ ${typeLabel(e.type)}${e.chip? ' ・ '+chipLabel(e.type, e.chip):''}</div>
-            ${e.text? `<div class="text">${escapeHtml(e.text)}</div>` : ''}
-            ${(e.text && LANG==='es')? `<div class="text-es" data-text="${escapeHtml(e.text)}" style="color:var(--ink-soft);font-size:12px;margin-top:2px;">ES ・ …</div>` : ''}
+            ${e.text? `<div class="text"${LANG==='es'? ' style="font-size:12px;color:var(--ink-soft);"':''}>${escapeHtml(e.text)}</div>` : ''}
+            ${(e.text && LANG==='es')? `<div class="text-es" data-text="${escapeHtml(e.text)}" style="font-size:14px;margin-top:2px;">ES ・ …</div>` : ''}
           </div>
         `;
         wrap.appendChild(row);
@@ -982,8 +982,8 @@ function renderTimeline(){
         <div class="ic" style="color:${t.color}">${t.icon}</div>
         <div class="body">
           <div class="time">${time} ・ ${typeLabel(e.type)}${e.chip? ' ・ '+chipLabel(e.type, e.chip):''}</div>
-          ${e.text? `<div class="text">${escapeHtml(e.text)}</div>` : ''}
-          ${(e.text && LANG==='es')? `<div class="text-es" data-text="${escapeHtml(e.text)}" style="color:var(--ink-soft);font-size:12px;margin-top:2px;">ES ・ …</div>` : ''}
+          ${e.text? `<div class="text"${LANG==='es'? ' style="font-size:12px;color:var(--ink-soft);"':''}>${escapeHtml(e.text)}</div>` : ''}
+          ${(e.text && LANG==='es')? `<div class="text-es" data-text="${escapeHtml(e.text)}" style="font-size:14px;margin-top:2px;">ES ・ …</div>` : ''}
         </div>
         <button class="del" data-id="${e.id}">✕</button>
       `;
@@ -1153,8 +1153,8 @@ function renderDayEntries(dateStr){
       <div class="ic" style="color:${t.color}">${t.icon}</div>
       <div class="body">
         <div class="time">${time} ・ ${typeLabel(e.type)}${e.chip? ' ・ '+chipLabel(e.type, e.chip):''}</div>
-        ${e.text? `<div class="text">${escapeHtml(e.text)}</div>` : ''}
-        ${(e.text && LANG==='es')? `<div class="text-es" data-text="${escapeHtml(e.text)}" style="color:var(--ink-soft);font-size:12px;margin-top:2px;">ES ・ …</div>` : ''}
+        ${e.text? `<div class="text"${LANG==='es'? ' style="font-size:12px;color:var(--ink-soft);"':''}>${escapeHtml(e.text)}</div>` : ''}
+        ${(e.text && LANG==='es')? `<div class="text-es" data-text="${escapeHtml(e.text)}" style="font-size:14px;margin-top:2px;">ES ・ …</div>` : ''}
       </div>
       <button class="del" data-id="${e.id}">✕</button>
     `;
@@ -1519,10 +1519,14 @@ async function translateJaToEs(text){
   // しまった古い訳がいつまでも優先されてしまう。
   let queryText = trimmed;
   let dictApplied = false;
+  const placeholders = {}; // プレースホルダー→辞書訳 の対応表
+  let phIndex = 0;
   const dictKeys = Object.keys(dict).sort((a,b)=> b.length - a.length);
   for(const key of dictKeys){
     if(queryText.includes(key)){
-      queryText = queryText.split(key).join(dict[key]);
+      const ph = '§' + (phIndex++) + '§'; // 翻訳APIが誤変換しない記号で保護
+      placeholders[ph] = dict[key];
+      queryText = queryText.split(key).join(ph);
       dictApplied = true;
     }
   }
@@ -1530,7 +1534,9 @@ async function translateJaToEs(text){
   // もう翻訳の必要はない(=辞書の語+商品名などの英数字だけになった)。
   const hasJapanese = /[\u3040-\u30ff\u3400-\u9fff]/.test(queryText);
   if(dictApplied && !hasJapanese){
-    return {text: queryText, source:'dict'};
+    let finalText = queryText;
+    for(const ph in placeholders){ finalText = finalText.split(ph).join(placeholders[ph]); }
+    return {text: finalText, source:'dict'};
   }
 
   // 辞書を部分適用した場合は、置き換え後の文字列をキャッシュキーにする
@@ -1546,7 +1552,9 @@ async function translateJaToEs(text){
     const res = await fetch(url);
     if(res.ok){
       const data = await res.json();
-      const translated = (data[0]||[]).map(seg=>seg[0]).join('');
+      let translated = (data[0]||[]).map(seg=>seg[0]).join('');
+      // プレースホルダーを辞書訳に戻す
+      for(const ph in placeholders){ translated = translated.split(ph).join(placeholders[ph]); }
       if(translated){
         cache[cacheKey] = translated;
         saveTranslateCache(cache);
@@ -1561,7 +1569,8 @@ async function translateJaToEs(text){
     const res = await fetch(url);
     if(res.ok){
       const data = await res.json();
-      const translated = data && data.responseData && data.responseData.translatedText;
+      let translated = data && data.responseData && data.responseData.translatedText;
+      if(translated){ for(const ph in placeholders){ translated = translated.split(ph).join(placeholders[ph]); } }
       if(translated){
         cache[cacheKey] = translated;
         saveTranslateCache(cache);
