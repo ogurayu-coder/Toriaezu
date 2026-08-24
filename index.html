@@ -1725,6 +1725,19 @@ function saveTranslateCache(cache){
   catch(e){ /* 保存できなくても翻訳自体は続行 */ }
 }
 
+// プレースホルダー(§0§など)を辞書訳に戻す。
+// Google翻訳などのAPIを経由すると「§ 0 §」のように数字の前後に
+// 空白が挿入されることがあるため、完全一致ではなく空白を許容して置換する。
+function restorePlaceholders(text, placeholders){
+  let result = text;
+  for(const ph in placeholders){
+    const digits = ph.replace(/§/g, '');
+    const re = new RegExp('§\\s*' + digits + '\\s*§', 'g');
+    result = result.replace(re, placeholders[ph]);
+  }
+  return result;
+}
+
 // 日本語テキストをスペイン語に変換する。戻り値: {text, source}
 // source: 'dict' | 'cache' | 'api' | null(全て失敗)
 async function translateJaToEs(text){
@@ -1763,7 +1776,11 @@ async function translateJaToEs(text){
   // (元のメモ文をキーにすると、辞書追加前の古いキャッシュと衝突するため)。
   const cacheKey = dictApplied ? queryText : trimmed;
   const cache = loadTranslateCache();
-  if(cache[cacheKey]) return {text: cache[cacheKey], source:'cache'};
+  // §記号が残ったままの壊れたキャッシュ(過去のプレースホルダー復元失敗)は
+  // 無視して、翻訳をやり直す。
+  if(cache[cacheKey] && !cache[cacheKey].includes('§')){
+    return {text: cache[cacheKey], source:'cache'};
+  }
 
   // ① Google翻訳(非公式エンドポイント)。仕様変更やCORS制限で
   // 落ちることがあるため、必ずtry/catchで②へフォールバックする。
@@ -1774,7 +1791,7 @@ async function translateJaToEs(text){
       const data = await res.json();
       let translated = (data[0]||[]).map(seg=>seg[0]).join('');
       // プレースホルダーを辞書訳に戻す
-      for(const ph in placeholders){ translated = translated.split(ph).join(placeholders[ph]); }
+      translated = restorePlaceholders(translated, placeholders);
       if(translated){
         cache[cacheKey] = translated;
         saveTranslateCache(cache);
@@ -1790,7 +1807,7 @@ async function translateJaToEs(text){
     if(res.ok){
       const data = await res.json();
       let translated = data && data.responseData && data.responseData.translatedText;
-      if(translated){ for(const ph in placeholders){ translated = translated.split(ph).join(placeholders[ph]); } }
+      if(translated){ translated = restorePlaceholders(translated, placeholders); }
       if(translated){
         cache[cacheKey] = translated;
         saveTranslateCache(cache);
