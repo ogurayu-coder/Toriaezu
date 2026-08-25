@@ -2329,8 +2329,21 @@ function dueStatus(nextDue){
 function renderVaccineTypeSection(typeKey){
   const ty = TYPES[typeKey];
   const all = visibleEntries(logs[activeDog]).filter(e=>e.type===typeKey).slice().sort((a,b)=> b.at.localeCompare(a.at));
-  const last = all[0];
   const title = typeKey==='vaccine' ? t('vaccineSectionTitle') : t('dewormSectionTitle');
+
+  // ワクチン・駆虫の種類(chip)ごとに最新の記録を取り出す(alは新しい順なので最初に出てきたものが最新)
+  const latestByChip = {};
+  all.forEach(e=>{
+    const key = e.chip || '__default__';
+    if(!latestByChip[key]) latestByChip[key] = e;
+  });
+  const latestEntries = Object.values(latestByChip);
+
+  // 種類ごとの最新記録の中から、次回予定日が一番早い(=一番急ぎの)ものを代表として表示する
+  const withNextDue = latestEntries.filter(e=>e.nextDue);
+  const last = withNextDue.length
+    ? withNextDue.slice().sort((a,b)=> a.nextDue.localeCompare(b.nextDue))[0]
+    : all[0];
 
   let statusBody;
   if(last){
