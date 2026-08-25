@@ -21,15 +21,21 @@ La app funciona solo en el navegador. Los registros de `demo.html` se guardan so
 
 ---
 
-## Sobre cómo se guardan los datos (importante)
+## 💾 Sobre cómo se guardan los datos
 
 **Lo que sigue es sobre `demo.html` (la versión principal). `index.html` sincroniza con la nube, así que no aplica (ver arriba).**
 
 - Los registros se guardan **solo en ese navegador, en ese dispositivo (localStorage)**. No se comparten automáticamente con otros dispositivos ni con la nube.
-- Aunque sea el mismo enlace, si el dispositivo es distinto (por ejemplo un iPhone y un iPad), los datos se guardan por separado.
-- **Si se abre en modo privado (incógnito), los datos desaparecen en cuanto se cierra la pestaña.** Para el uso normal, abrir siempre en modo normal de Safari.
-- **Si en Safari se usa "Borrar historial y datos de sitios web", los registros guardados en ese dispositivo se pierden por completo.** No hay forma de recuperarlos después, así que antes de hacer limpieza de almacenamiento o solucionar algún problema en el iPhone, siempre conviene sacar un respaldo primero.
-- Agregar el ícono a la pantalla de inicio ayuda a abrir siempre desde el mismo lugar (botón Compartir en Safari → "Agregar a pantalla de inicio").
+- Aunque sea el mismo enlace, si el dispositivo es distinto (por ejemplo un iPhone y un iPad, o un celular y una computadora), los datos se guardan por separado.
+- Agregar el ícono a la pantalla de inicio ayuda a abrir siempre desde el mismo lugar.
+
+**📱 En iPhone (Safari)**
+- Si se abre en modo privado, los datos desaparecen en cuanto se cierra la pestaña. Para el uso normal, abrir siempre en modo normal de Safari.
+- Si en "Ajustes" → "Safari" → "Borrar historial y datos de sitios web" se hace esta limpieza, los registros guardados en ese dispositivo se pierden por completo. No hay forma de recuperarlos después, así que antes de hacer limpieza de almacenamiento o solucionar algún problema en el iPhone, siempre conviene sacar un respaldo primero.
+
+**🤖 En Android**
+- En el modo incógnito de Chrome (u otro navegador), igual que en iPhone, los datos desaparecen al cerrar la pestaña.
+- Si se usa "Borrar datos de navegación" (incluyendo cookies y datos de sitios) desde el navegador, los registros locales también se pierden por completo. Conviene sacar un respaldo antes de hacer esta limpieza.
 
 ---
 
