@@ -2372,7 +2372,8 @@ function renderVaccineTypeSection(typeKey){
           <div style="font-size:12px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;">
             <div style="font-weight:600;">${fmtFullDate(e.at.slice(0,10))}${e.chip ? ' · '+escapeHtml(chipLabel(typeKey,e.chip)) : ''}</div>
             ${e.nextDue ? `<div style="color:var(--ink-soft);">${t('nextDueDisplayLabel')}: ${fmtFullDate(e.nextDue)}</div>` : ''}
-            ${e.text ? `<div style="color:var(--ink-soft);margin-top:2px;">${escapeHtml(e.text)}</div>` : ''}
+            ${e.text? `<div class="text" style="color:var(--ink-soft);margin-top:2px;${LANG==='es'?'font-size:11px;':''}">${escapeHtml(e.text)}</div>` : ''}
+            ${(e.text && LANG==='es')? `<div class="text-es" data-text="${escapeHtml(e.text)}" style="color:var(--ink);margin-top:2px;">ES ・ …</div>` : ''}
           </div>
         `).join('')}
       </div>
@@ -2393,6 +2394,13 @@ function renderVaccineTypeSection(typeKey){
 
 function renderVaccineSchedule(){
   $('vaccineScheduleBody').innerHTML = renderVaccineTypeSection('vaccine') + renderVaccineTypeSection('deworm');
+  // スペイン語表示の時だけ、履歴を開いたタイミングでメモを翻訳する
+  // (閉じたままの履歴を無駄に先読み翻訳しないため)。
+  if(LANG==='es'){
+    $('vaccineScheduleBody').querySelectorAll('details').forEach(d=>{
+      d.addEventListener('toggle', ()=>{ if(d.open) fillEsTranslations(d); });
+    });
+  }
 }
 
 function openVaccineOverlay(){
