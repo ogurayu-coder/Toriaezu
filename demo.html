@@ -451,6 +451,11 @@
 <div class="overlay" id="overlay">
   <div class="sheet">
     <h2><span id="sheetIcon"></span><span id="sheetTitle"></span></h2>
+    <div style="margin-bottom:8px;">
+      <label for="entryDate" data-i18n="entryDateLabel" style="display:block;font-size:12px;color:var(--ink-soft);margin-bottom:4px;">記録日</label>
+      <input type="date" id="entryDate" style="width:100%;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-family:'Inter',sans-serif;font-size:13px;margin-bottom:6px;">
+      <div id="entryDateQuick" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+    </div>
     <input type="time" id="entryTime">
     <div class="chiprow" id="chiprow"></div>
     <div id="nextDueWrap" style="display:none;margin:8px 0;">
@@ -852,6 +857,14 @@ function localDateStr(d){
 }
 function todayStr(){ return localDateStr(new Date()); }
 
+// 今日からnヶ月後の日付文字列を返す(月末日のズレはJSのDateにまかせる:
+// 例えば1/31の1ヶ月後は3/3になるが、ワクチン等の「だいたいの目安」用途では許容範囲)
+function monthsFromToday(n){
+  const d = new Date();
+  d.setMonth(d.getMonth()+n);
+  return localDateStr(d);
+}
+
 function fmtDayLabel(dateStr){
   const d = new Date(dateStr+'T00:00:00');
   const today = todayStr();
@@ -1212,6 +1225,27 @@ function openSheet(type, dateOverride){
   $('sheetTitle').textContent = (LANG==='es' ? ('Registrar: ' + typeLabel(type)) : (t.label + 'を記録')) + (pendingDate!==todayStr() ? `(${fmtDayLabel(pendingDate)})` : '');
   const now = new Date();
   $('entryTime').value = now.toTimeString().slice(0,5);
+  $('entryDate').value = pendingDate;
+  const dq = $('entryDateQuick');
+  dq.innerHTML = '';
+  [
+    ['qdToday', 0], ['qd1m', 1], ['qd3m', 3], ['qd6m', 6], ['qd1y', 12]
+  ].forEach(([labelKey, n])=>{
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = (I18N[LANG] && I18N[LANG][labelKey]) || I18N.ja[labelKey] || labelKey;
+    b.style.cssText = 'font-size:11px;padding:6px 10px;border-radius:20px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;';
+    b.onclick = ()=>{
+      pendingDate = n===0 ? todayStr() : monthsFromToday(n);
+      $('entryDate').value = pendingDate;
+      $('sheetTitle').textContent = (LANG==='es' ? ('Registrar: ' + typeLabel(type)) : (t.label + 'を記録')) + (pendingDate!==todayStr() ? `(${fmtDayLabel(pendingDate)})` : '');
+    };
+    dq.appendChild(b);
+  });
+  $('entryDate').onchange = ()=>{
+    pendingDate = $('entryDate').value || todayStr();
+    $('sheetTitle').textContent = (LANG==='es' ? ('Registrar: ' + typeLabel(type)) : (t.label + 'を記録')) + (pendingDate!==todayStr() ? `(${fmtDayLabel(pendingDate)})` : '');
+  };
   $('entryText').value = '';
   const chiprow = $('chiprow');
   chiprow.innerHTML = '';
@@ -1331,6 +1365,12 @@ const I18N = {
     entryCancelBtn: 'やめる',
     entrySaveBtn: '記録する',
     entryMemoPlaceholder: 'メモ(任意)',
+    entryDateLabel: '記録日',
+    qdToday: '今日',
+    qd1m: '1ヶ月後',
+    qd3m: '3ヶ月後',
+    qd6m: '半年後',
+    qd1y: '1年後',
     namePlaceholder: '名前(例: ポチ)',
     versionBadge: '(端末保存版)',
     subPlaceholder: 'ひとこと(任意・例: 3歳、柴犬)',
@@ -1383,6 +1423,12 @@ const I18N = {
     entryCancelBtn: 'Cancelar',
     entrySaveBtn: 'Guardar',
     entryMemoPlaceholder: 'Nota (opcional)',
+    entryDateLabel: 'Fecha del registro',
+    qdToday: 'Hoy',
+    qd1m: 'En 1 mes',
+    qd3m: 'En 3 meses',
+    qd6m: 'En 6 meses',
+    qd1y: 'En 1 año',
     namePlaceholder: 'Nombre (ej: Firulais)',
     versionBadge: '(Guardado en el dispositivo)',
     subPlaceholder: 'Nota breve (opcional, ej: 3 años)',
@@ -2109,11 +2155,14 @@ function renderVaccineTypeSection(typeKey){
       <summary style="font-size:12px;color:var(--ink-soft);cursor:pointer;">${t('historyLabel')} (${all.length})</summary>
       <div style="margin-top:6px;display:flex;flex-direction:column;gap:6px;">
         ${all.map(e=>`
-          <div style="font-size:12px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;">
-            <div style="font-weight:600;">${fmtFullDate(e.at.slice(0,10))}${e.chip ? ' · '+escapeHtml(chipLabel(typeKey,e.chip)) : ''}</div>
-            ${e.nextDue ? `<div style="color:var(--ink-soft);">${t('nextDueDisplayLabel')}: ${fmtFullDate(e.nextDue)}</div>` : ''}
-            ${e.text? `<div class="text" style="color:var(--ink-soft);margin-top:2px;${LANG==='es'?'font-size:11px;':''}">${escapeHtml(e.text)}</div>` : ''}
-            ${(e.text && LANG==='es')? `<div class="text-es" data-text="${escapeHtml(e.text)}" style="color:var(--ink);margin-top:2px;">ES ・ …</div>` : ''}
+          <div style="font-size:12px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;display:flex;gap:8px;align-items:flex-start;">
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:600;">${fmtFullDate(e.at.slice(0,10))}${e.chip ? ' · '+escapeHtml(chipLabel(typeKey,e.chip)) : ''}</div>
+              ${e.nextDue ? `<div style="color:var(--ink-soft);">${t('nextDueDisplayLabel')}: ${fmtFullDate(e.nextDue)}</div>` : ''}
+              ${e.text? `<div class="text" style="color:var(--ink-soft);margin-top:2px;${LANG==='es'?'font-size:11px;':''}">${escapeHtml(e.text)}</div>` : ''}
+              ${(e.text && LANG==='es')? `<div class="text-es" data-text="${escapeHtml(e.text)}" style="color:var(--ink);margin-top:2px;">ES ・ …</div>` : ''}
+            </div>
+            <button class="del vaxhist-del" data-id="${e.id}" title="${t('deleteTitle')}" style="flex:0 0 auto;border:none;background:none;color:var(--ink-soft);font-size:14px;cursor:pointer;padding:2px 6px;">✕</button>
           </div>
         `).join('')}
       </div>
@@ -2141,6 +2190,17 @@ function renderVaccineSchedule(){
       d.addEventListener('toggle', ()=>{ if(d.open) fillEsTranslations(d); });
     });
   }
+  $('vaccineScheduleBody').querySelectorAll('.vaxhist-del').forEach(btn=>{
+    btn.onclick = async ()=>{
+      const id = btn.dataset.id;
+      await withFreshLogs(()=>{
+        markDeleted(logs[activeDog], id);
+      });
+      renderVaccineSchedule();
+      renderTimeline();
+      renderCalendar();
+    };
+  });
 }
 
 function openVaccineOverlay(){
