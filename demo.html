@@ -460,7 +460,8 @@
     <div class="chiprow" id="chiprow"></div>
     <div id="nextDueWrap" style="display:none;margin:8px 0;">
       <label for="entryNextDue" data-i18n="nextDueLabel" style="display:block;font-size:12px;color:var(--ink-soft);margin-bottom:4px;">次回予定日(任意)</label>
-      <input type="date" id="entryNextDue" style="width:100%;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-family:'Inter',sans-serif;font-size:13px;">
+      <input type="date" id="entryNextDue" style="width:100%;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-family:'Inter',sans-serif;font-size:13px;margin-bottom:6px;">
+      <div id="nextDueQuick" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
     </div>
     <textarea id="entryText" data-i18n-placeholder="entryMemoPlaceholder" placeholder="メモ(任意)"></textarea>
     <div class="actions">
@@ -864,6 +865,14 @@ function monthsFromToday(n){
   d.setMonth(d.getMonth()+n);
   return localDateStr(d);
 }
+// baseDateStrからnヶ月後の日付文字列を返す(次回予定日クイックボタン用。
+// 記録日を基準にする:例えば過去にさかのぼって記録した接種の「1年後」は
+// 記録日の1年後であるべきで、今日からの1年後ではない)
+function monthsFromDate(baseDateStr, n){
+  const d = baseDateStr ? new Date(baseDateStr+'T00:00:00') : new Date();
+  d.setMonth(d.getMonth()+n);
+  return localDateStr(d);
+}
 
 function fmtDayLabel(dateStr){
   const d = new Date(dateStr+'T00:00:00');
@@ -1005,6 +1014,7 @@ function renderTimeline(){
   });
   wrap.querySelectorAll('.del').forEach(btn=>{
     btn.onclick = async ()=>{
+      if(!confirm(t('deleteEntryConfirmMsg'))) return;
       const id = btn.dataset.id;
       await withFreshLogs(()=>{
         markDeleted(logs[activeDog], id);
@@ -1175,6 +1185,7 @@ function renderDayEntries(dateStr){
   });
   wrap.querySelectorAll('.del').forEach(btn=>{
     btn.onclick = async ()=>{
+      if(!confirm(t('deleteEntryConfirmMsg'))) return;
       const id = btn.dataset.id;
       await withFreshLogs(()=>{
         markDeleted(logs[activeDog], id);
@@ -1229,14 +1240,14 @@ function openSheet(type, dateOverride){
   const dq = $('entryDateQuick');
   dq.innerHTML = '';
   [
-    ['qdToday', 0], ['qd1m', 1], ['qd3m', 3], ['qd6m', 6], ['qd1y', 12]
+    ['qdToday', 0]
   ].forEach(([labelKey, n])=>{
     const b = document.createElement('button');
     b.type = 'button';
     b.textContent = (I18N[LANG] && I18N[LANG][labelKey]) || I18N.ja[labelKey] || labelKey;
     b.style.cssText = 'font-size:11px;padding:6px 10px;border-radius:20px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;';
     b.onclick = ()=>{
-      pendingDate = n===0 ? todayStr() : monthsFromToday(n);
+      pendingDate = todayStr();
       $('entryDate').value = pendingDate;
       $('sheetTitle').textContent = (LANG==='es' ? ('Registrar: ' + typeLabel(type)) : (t.label + 'を記録')) + (pendingDate!==todayStr() ? `(${fmtDayLabel(pendingDate)})` : '');
     };
@@ -1266,6 +1277,23 @@ function openSheet(type, dateOverride){
   const isVaccineType = (type==='vaccine' || type==='deworm');
   nextDueWrap.style.display = isVaccineType ? 'block' : 'none';
   $('entryNextDue').value = '';
+  const ndq = $('nextDueQuick');
+  ndq.innerHTML = '';
+  if(isVaccineType){
+    [
+      ['qd1m', 1], ['qd3m', 3], ['qd6m', 6], ['qd1y', 12]
+    ].forEach(([labelKey, n])=>{
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = (I18N[LANG] && I18N[LANG][labelKey]) || I18N.ja[labelKey] || labelKey;
+      b.style.cssText = 'font-size:11px;padding:6px 10px;border-radius:20px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;';
+      b.onclick = ()=>{
+        // 記録日(entryDate)を基準に、そのnヶ月後を次回予定日にセットする
+        $('entryNextDue').value = monthsFromDate($('entryDate').value || pendingDate, n);
+      };
+      ndq.appendChild(b);
+    });
+  }
   $('overlay').classList.add('show');
 }
 
@@ -1375,6 +1403,7 @@ const I18N = {
     versionBadge: '(端末保存版)',
     subPlaceholder: 'ひとこと(任意・例: 3歳、柴犬)',
     deleteTitle: '削除',
+    deleteEntryConfirmMsg: 'この記録を削除します。よろしいですか?',
     earsLabel: '耳の形',
     colorLabel: '毛色・柄',
     extraLabel: '追加の模様(自由に組み合わせ可)',
@@ -1433,6 +1462,7 @@ const I18N = {
     versionBadge: '(Guardado en el dispositivo)',
     subPlaceholder: 'Nota breve (opcional, ej: 3 años)',
     deleteTitle: 'Eliminar',
+    deleteEntryConfirmMsg: 'Se eliminará este registro. ¿Estás seguro?',
     earsLabel: 'Orejitas',
     colorLabel: 'Color',
     extraLabel: 'Opciones',
@@ -2192,6 +2222,7 @@ function renderVaccineSchedule(){
   }
   $('vaccineScheduleBody').querySelectorAll('.vaxhist-del').forEach(btn=>{
     btn.onclick = async ()=>{
+      if(!confirm(t('deleteEntryConfirmMsg'))) return;
       const id = btn.dataset.id;
       await withFreshLogs(()=>{
         markDeleted(logs[activeDog], id);
