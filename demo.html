@@ -2156,14 +2156,20 @@ function renderVaccineTypeSection(typeKey){
   const latestEntries = Object.values(latestByChip);
 
   // 種類ごとの最新記録の中から、次回予定日が一番早い(=一番急ぎの)ものを代表として表示する
+  // 同じ次回予定日のものが複数(例:5種混合と狂犬病を同日に接種)ある場合は、
+  // 全てまとめて表示する(片方だけ表示されないように)
   const withNextDue = latestEntries.filter(e=>e.nextDue);
-  const last = withNextDue.length
-    ? withNextDue.slice().sort((a,b)=> a.nextDue.localeCompare(b.nextDue))[0]
-    : all[0];
+  const earliestNextDue = withNextDue.length
+    ? withNextDue.slice().sort((a,b)=> a.nextDue.localeCompare(b.nextDue))[0].nextDue
+    : null;
+  const dueEntries = earliestNextDue
+    ? withNextDue.filter(e=>e.nextDue===earliestNextDue)
+    : [];
+  const last = dueEntries.length ? dueEntries[0] : all[0];
 
   let statusBody;
-  if(last){
-    const st = last.nextDue ? dueStatus(last.nextDue) : null;
+  if(dueEntries.length){
+    const st = dueStatus(earliestNextDue);
     const statusColor = st==='overdue' ? '#B3473A' : (st==='soon' ? '#C98A1F' : '#3A7D44');
     const statusText = st==='overdue' ? t('statusOverdue') : (st==='soon' ? t('statusSoon') : (st==='ok' ? t('statusOk') : ''));
     const statusIcon = st==='overdue'
@@ -2172,9 +2178,14 @@ function renderVaccineTypeSection(typeKey){
       ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v5l3.5 2"/></svg>'
       : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M8 12.5l2.5 2.5 5.5-6"/></svg>';
     statusBody = `
-      <div style="font-size:12px;color:var(--ink-soft);">${t('lastDoneLabel')}: ${fmtFullDate(last.at.slice(0,10))}${last.chip ? ' · '+escapeHtml(chipLabel(typeKey,last.chip)) : ''}</div>
-      <div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">${t('nextDueDisplayLabel')}: ${last.nextDue ? fmtFullDate(last.nextDue) : t('noNextDueSet')}</div>
+      ${dueEntries.map(e=>`<div style="font-size:12px;color:var(--ink-soft);">${t('lastDoneLabel')}: ${fmtFullDate(e.at.slice(0,10))}${e.chip ? ' · '+escapeHtml(chipLabel(typeKey,e.chip)) : ''}</div>`).join('')}
+      <div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">${t('nextDueDisplayLabel')}: ${fmtFullDate(earliestNextDue)}</div>
       ${st ? `<div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:${statusColor};margin-top:4px;"><span style="width:14px;height:14px;flex:0 0 auto;display:flex;">${statusIcon}</span>${statusText}</div>` : ''}
+    `;
+  } else if(last){
+    statusBody = `
+      <div style="font-size:12px;color:var(--ink-soft);">${t('lastDoneLabel')}: ${fmtFullDate(last.at.slice(0,10))}${last.chip ? ' · '+escapeHtml(chipLabel(typeKey,last.chip)) : ''}</div>
+      <div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">${t('nextDueDisplayLabel')}: ${t('noNextDueSet')}</div>
     `;
   } else {
     statusBody = `<div style="font-size:12px;color:var(--ink-soft);">${t('noRecordYet')}</div>`;
