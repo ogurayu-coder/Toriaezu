@@ -2438,14 +2438,12 @@ function renderVaccineTypeSection(typeKey){
       ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v5l3.5 2"/></svg>'
       : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M8 12.5l2.5 2.5 5.5-6"/></svg>';
     statusBody = `
-      ${dueEntries.map(e=>`<div style="font-size:12px;color:var(--ink-soft);">${t('lastDoneLabel')}: ${fmtFullDate(e.at.slice(0,10))}${e.chip ? ' · '+escapeHtml(chipLabel(typeKey,e.chip)) : ''}</div>`).join('')}
-      <div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">${t('nextDueDisplayLabel')}: ${fmtFullDate(earliestNextDue)}</div>
+      <div style="font-size:12px;color:var(--ink-soft);">${t('nextDueDisplayLabel')}: ${fmtFullDate(earliestNextDue)}</div>
       ${st ? `<div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:${statusColor};margin-top:4px;"><span style="width:14px;height:14px;flex:0 0 auto;display:flex;">${statusIcon}</span>${statusText}</div>` : ''}
     `;
   } else if(last){
     statusBody = `
-      <div style="font-size:12px;color:var(--ink-soft);">${t('lastDoneLabel')}: ${fmtFullDate(last.at.slice(0,10))}${last.chip ? ' · '+escapeHtml(chipLabel(typeKey,last.chip)) : ''}</div>
-      <div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">${t('nextDueDisplayLabel')}: ${t('noNextDueSet')}</div>
+      <div style="font-size:12px;color:var(--ink-soft);">${t('nextDueDisplayLabel')}: ${t('noNextDueSet')}</div>
     `;
   } else {
     statusBody = `<div style="font-size:12px;color:var(--ink-soft);">${t('noRecordYet')}</div>`;
