@@ -2437,7 +2437,11 @@ function renderVaccineTypeSection(typeKey){
       : st==='soon'
       ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v5l3.5 2"/></svg>'
       : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M8 12.5l2.5 2.5 5.5-6"/></svg>';
-    const dueChipLabels = dueEntries.map(e=> e.chip ? chipLabel(typeKey,e.chip) : '').filter(Boolean).join('・');
+    // 「その他」の場合はチップ名(その他/Otra/Otro)ではなく、メモの先頭部分を表示する
+    const dueChipLabels = dueEntries.map(e=>{
+      if(e.chip==='その他') return e.text ? e.text.slice(0,12)+(e.text.length>12 ? '…' : '') : '';
+      return e.chip ? chipLabel(typeKey,e.chip) : '';
+    }).filter(Boolean).join('・');
     statusBody = `
       <div style="font-size:12px;color:var(--ink-soft);">${t('nextDueDisplayLabel')}: ${fmtFullDate(earliestNextDue)}${dueChipLabels ? ' · '+escapeHtml(dueChipLabels) : ''}</div>
       ${st ? `<div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:${statusColor};margin-top:4px;"><span style="width:14px;height:14px;flex:0 0 auto;display:flex;">${statusIcon}</span>${statusText}</div>` : ''}
