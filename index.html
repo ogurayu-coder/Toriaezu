@@ -1184,7 +1184,7 @@ async function fillEsTranslations(rootEl){
 
     const {text} = await translateJaToEs(jaText);
     if(document.body.contains(elx)){
-      elx.textContent = text ? ('ES ・ ' + text) : '';
+      elx.textContent = text ? ('ES ・ ' + text) : ('ES ・ ' + t('translateFailedLabel'));
     }
     await new Promise(r=>setTimeout(r, 200)); // 未知語の連続呼び出しを少し間引く
   }
@@ -1609,6 +1609,7 @@ const I18N = {
     nextDueDisplayLabel: '次回予定',
     noRecordYet: 'まだ記録がありません',
     noNextDueSet: '次回予定日は未設定',
+    translateFailedLabel: '(翻訳できませんでした・電波の良い所で開き直すと直ることがあります)',
     statusOverdue: '期限を過ぎています',
     statusSoon: 'そろそろです',
     statusOk: '余裕があります',
@@ -1682,6 +1683,7 @@ const I18N = {
     nextDueDisplayLabel: 'Próxima fecha',
     noRecordYet: 'Todavía no hay registros',
     noNextDueSet: 'Sin próxima fecha definida',
+    translateFailedLabel: '(no se pudo traducir; intenta abrir la app con mejor señal)',
     statusOverdue: 'Fecha vencida',
     statusSoon: 'Se acerca la fecha',
     statusOk: 'Sin urgencia',
@@ -1783,6 +1785,7 @@ const DEFAULT_ES_DICT = {
   '転倒': 'se cayó',
   '転ぶ': 'se cayó',
   'こけた': 'se cayó',
+  'マッサージ': 'masaje',
 };
 
 function loadEsDict(){
@@ -1876,15 +1879,19 @@ async function translateJaToEs(text){
     }
   }catch(e){ /* ②へ */ }
 
-  // ② MyMemory API(フォールバック)
+  // ② MyMemory API(フォールバック)。無料枠を使い切ると200 OKのまま
+  // 本文に"MYMEMORY WARNING..."のような英語の警告文が返ってくることが
+  // あるので、それを翻訳結果として保存してしまわないよう弾く。
   try{
     const url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(queryText) + '&langpair=ja|es';
     const res = await fetch(url);
     if(res.ok){
       const data = await res.json();
       let translated = data && data.responseData && data.responseData.translatedText;
-      if(translated){ translated = restorePlaceholders(translated, placeholders); }
-      if(translated){
+      const looksLikeWarning = translated && /mymemory|warning|quota|invalid/i.test(translated);
+      const echoedInput = translated && translated.trim() === queryText.trim();
+      if(translated && !looksLikeWarning && !echoedInput){
+        translated = restorePlaceholders(translated, placeholders);
         cache[cacheKey] = translated;
         saveTranslateCache(cache);
         return {text: translated, source:'api'};
