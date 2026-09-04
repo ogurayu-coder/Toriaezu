@@ -2181,7 +2181,7 @@ function createDogRow(dog, opts){
     ${opts.showDelete ? `
     <label class="setup-behavior-toggle" style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:12px;color:var(--ink-soft);cursor:pointer;">
       <input type="checkbox" class="setup-behavior-enabled" ${dog && dog.behaviorEnabled ? 'checked' : ''} style="width:16px;height:16px;flex:0 0 auto;">
-      <span data-i18n="behaviorToggleLabel">行動・社会化の記録を使う</span>
+      <span data-i18n="behaviorToggleLabel">${t('behaviorToggleLabel')}</span>
     </label>
     ` : ''}
   `;
@@ -2324,7 +2324,7 @@ function collectDogFromRow(row){
   const hachiOcher = !!marks.hachiOcher, hachiGray = !!marks.hachiGray;
 
   const behaviorToggle = row.querySelector('.setup-behavior-enabled');
-  const behaviorEnabled = behaviorToggle ? behaviorToggle.checked : (dog ? !!dog.behaviorEnabled : false);
+  const behaviorEnabled = behaviorToggle ? behaviorToggle.checked : false;
 
   return {name, sub, coat:color, color, ears, mask, patch, hachiOcher, hachiGray, pattern, behaviorEnabled};
 }

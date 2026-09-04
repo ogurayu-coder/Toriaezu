@@ -419,6 +419,9 @@
   <div style="margin-bottom:8px;">
     <button id="vaccineMenuBtn" style="width:100%;font-size:12px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto;"><g transform="rotate(-40 12 12)"><line x1="2" y1="9.2" x2="2" y2="14.8"/><line x1="2" y1="12" x2="6" y2="12"/><rect x="6" y="9" width="10" height="6" rx="1"/><line x1="9" y1="9" x2="9" y2="11"/><line x1="13" y1="9" x2="13" y2="11"/><line x1="16" y1="12" x2="21.5" y2="12"/><line x1="21.5" y1="12" x2="22.8" y2="13.3"/></g></svg><span data-i18n="vaccineMenuBtn">ワクチン・駆虫</span></button>
   </div>
+  <div style="margin-bottom:8px;display:none;" id="behaviorMenuWrap">
+    <button id="behaviorMenuBtn" style="width:100%;font-size:12px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto;"><ellipse cx="12" cy="16.5" rx="5.5" ry="4.5"/><ellipse cx="6" cy="9.5" rx="2.1" ry="2.8"/><ellipse cx="10.5" cy="6" rx="2.1" ry="2.8"/><ellipse cx="15.5" cy="6" rx="2.1" ry="2.8"/><ellipse cx="19" cy="9.7" rx="2.1" ry="2.8"/></svg><span data-i18n="behaviorMenuBtn">行動・社会化</span></button>
+  </div>
   <div style="margin-bottom:8px;">
     <button id="manageDogsBtn" data-i18n="manageDogsBtn" style="width:100%;font-size:12px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-weight:600;cursor:pointer;">🐾 犬を管理(追加・編集・削除)</button>
   </div>
@@ -481,6 +484,36 @@
     <div id="vaccineScheduleBody"></div>
     <div class="actions">
       <button class="cancel" id="vaccineCloseBtn" data-i18n="closeBtn">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="behaviorOverlay">
+  <div class="sheet">
+    <h2 style="display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto;color:var(--note);"><ellipse cx="12" cy="16.5" rx="5.5" ry="4.5"/><ellipse cx="6" cy="9.5" rx="2.1" ry="2.8"/><ellipse cx="10.5" cy="6" rx="2.1" ry="2.8"/><ellipse cx="15.5" cy="6" rx="2.1" ry="2.8"/><ellipse cx="19" cy="9.7" rx="2.1" ry="2.8"/></svg><span data-i18n="behaviorOverlayTitle">行動・社会化の記録</span></h2>
+    <button id="behaviorRecordBtn" data-i18n="behaviorRecordBtn" style="width:100%;font-size:12px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-weight:600;cursor:pointer;margin-bottom:14px;">記録する</button>
+
+    <div id="behaviorHistoryBody"></div>
+
+    <div style="border-top:1px solid var(--line);margin-top:16px;padding-top:14px;">
+      <div style="font-weight:700;font-size:13px;margin-bottom:8px;" data-i18n="behaviorExportTitle">相談用にまとめる</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <div style="flex:1;">
+          <label for="behaviorFrom" data-i18n="behaviorFromLabel" style="display:block;font-size:11px;color:var(--ink-soft);margin-bottom:3px;">いつから</label>
+          <input type="date" id="behaviorFrom" style="width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-family:'Inter',sans-serif;font-size:12px;">
+        </div>
+        <div style="flex:1;">
+          <label for="behaviorTo" data-i18n="behaviorToLabel" style="display:block;font-size:11px;color:var(--ink-soft);margin-bottom:3px;">いつまで</label>
+          <input type="date" id="behaviorTo" style="width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-family:'Inter',sans-serif;font-size:12px;">
+        </div>
+      </div>
+      <button id="behaviorExportBtn" data-i18n="behaviorExportBtn" style="width:100%;font-size:12px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-weight:600;cursor:pointer;">この期間をまとめてコピー</button>
+      <div id="behaviorExportStatus" style="font-size:11px;color:var(--ink-soft);margin-top:6px;min-height:14px;"></div>
+      <textarea id="behaviorExportText" readonly style="display:none;width:100%;min-height:120px;font-family:monospace;font-size:11px;border-radius:8px;border:1px solid var(--line);padding:8px;background:#fff;margin-top:6px;"></textarea>
+    </div>
+
+    <div class="actions">
+      <button class="cancel" id="behaviorCloseBtn" data-i18n="closeBtn">閉じる</button>
     </div>
   </div>
 </div>
@@ -791,6 +824,7 @@ const TYPES = {
   med:  {label:'お薬', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="8.7" width="17" height="6.6" rx="3.3" transform="rotate(-30 12 12)"/><line x1="12" y1="6.9" x2="12" y2="17.1" transform="rotate(-30 12 12)"/></svg>', color:'var(--med)', chips:[]},
   vaccine: {label:'ワクチン', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-40 12 12)"><line x1="2" y1="9.2" x2="2" y2="14.8"/><line x1="2" y1="12" x2="6" y2="12"/><rect x="6" y="9" width="10" height="6" rx="1"/><line x1="9" y1="9" x2="9" y2="11"/><line x1="13" y1="9" x2="13" y2="11"/><line x1="16" y1="12" x2="21.5" y2="12"/><line x1="21.5" y1="12" x2="22.8" y2="13.3"/></g></svg>', color:'var(--med)', chips:['ボルデテラ','狂犬病','混合2種','混合3種','混合5種','その他']},
   deworm: {label:'駆虫・フィラリア', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="13" rx="4.5" ry="6"/><line x1="12" y1="7" x2="12" y2="19"/><line x1="7.5" y1="10" x2="4" y2="7.5"/><line x1="7.5" y1="13" x2="3" y2="13"/><line x1="7.5" y1="16" x2="4" y2="18.5"/><line x1="16.5" y1="10" x2="20" y2="7.5"/><line x1="16.5" y1="13" x2="21" y2="13"/><line x1="16.5" y1="16" x2="20" y2="18.5"/><line x1="10.3" y1="5.5" x2="9" y2="3"/><line x1="13.7" y1="5.5" x2="15" y2="3"/></svg>', color:'var(--med)', chips:['体内','体外','内外両方','その他']},
+  behavior: {label:'行動・社会化', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="16.5" rx="5.5" ry="4.5"/><ellipse cx="6" cy="9.5" rx="2.1" ry="2.8"/><ellipse cx="10.5" cy="6" rx="2.1" ry="2.8"/><ellipse cx="15.5" cy="6" rx="2.1" ry="2.8"/><ellipse cx="19" cy="9.7" rx="2.1" ry="2.8"/></svg>', color:'var(--note)', chips:['家族に対して','他の犬に対して','来客・外部に対して','その他']},
   note: {label:'気になったこと', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l.9-3.9L15.6 5.4a1.9 1.9 0 0 1 2.7 0l.3.3a1.9 1.9 0 0 1 0 2.7L8 19l-4 1Z"/><path d="M14.3 6.7l3 3"/></svg>', color:'var(--note)', chips:[]},
 };
 
@@ -808,6 +842,7 @@ const TYPE_LABEL_ES = {
   note: 'Nota',
   vaccine: 'Vacuna',
   deworm: 'Desparasitación',
+  behavior: 'Comportamiento/socialización',
 };
 const CHIP_ES_MAP = {
   meal: {'完食':'Comió todo','少し残した':'Dejó un poco','半分':'Comió la mitad','食べず':'No comió'},
@@ -818,6 +853,7 @@ const CHIP_ES_MAP = {
   note: {},
   vaccine: {'ボルデテラ':'Bordetella','狂犬病':'Rabia','混合2種':'Múltiple (2 en 1)','混合3種':'Múltiple (3 en 1)','混合5種':'Múltiple (5 en 1)','その他':'Otra'},
   deworm: {'体内':'Interno','体外':'Externo','内外両方':'Interno y externo','その他':'Otro'},
+  behavior: {'家族に対して':'Con la familia','他の犬に対して':'Con otro perro','来客・外部に対して':'Con visitas/afuera','その他':'Otro'},
 };
 
 // 種別ラベル(ごはん/Comida等)を現在の言語で返す
@@ -841,7 +877,7 @@ let logs = {}; // {dogId: [entries]}
 let pendingType = null;
 let pendingChip = null;
 let pendingDate = null;
-let pendingReturnToVaccine = false;
+let pendingReturnOverlay = null; // null | 'vaccine' | 'behavior'
 let currentDayDate = null;
 let calState = (()=>{ const d=new Date(); return {year:d.getFullYear(), month:d.getMonth()}; })();
 
@@ -1038,6 +1074,7 @@ function renderAll(){
   renderTimeline();
   renderCalendar();
   renderVaccineSchedule();
+  updateBehaviorMenuVisibility();
 }
 
 /* ---------- Calendar ---------- */
@@ -1205,7 +1242,9 @@ function openDayDetail(dateStr){
 
   const qwrap = $('dayQuickadd');
   qwrap.innerHTML = '';
+  const dogForDay = DOGS.find(d=>d.id===activeDog);
   Object.keys(TYPES).forEach(key=>{
+    if(key==='behavior' && !(dogForDay && dogForDay.behaviorEnabled)) return;
     const t = TYPES[key];
     const btn = document.createElement('button');
     btn.className = `qbtn ${key}`;
@@ -1299,9 +1338,11 @@ function openSheet(type, dateOverride){
 
 function closeSheet(){
   $('overlay').classList.remove('show');
-  if(pendingReturnToVaccine){
-    pendingReturnToVaccine = false;
-    openVaccineOverlay();
+  if(pendingReturnOverlay){
+    const target = pendingReturnOverlay;
+    pendingReturnOverlay = null;
+    if(target==='vaccine') openVaccineOverlay();
+    else if(target==='behavior') openBehaviorOverlay();
   }
 }
 
@@ -1425,6 +1466,20 @@ const I18N = {
     dewormSectionTitle: '駆虫・フィラリア',
     alertNeedName: '少なくとも1匹、名前を入力してください。',
     alertNeedOneDog: '少なくとも1匹は必要です。',
+    behaviorToggleLabel: '行動・社会化の記録を使う',
+    behaviorMenuBtn: '行動・社会化',
+    behaviorOverlayTitle: '行動・社会化の記録',
+    behaviorRecordBtn: '記録する',
+    behaviorHistoryLabel: '記録した内容',
+    behaviorExportTitle: '相談用にまとめる',
+    behaviorFromLabel: 'いつから',
+    behaviorToLabel: 'いつまで',
+    behaviorExportBtn: 'この期間をまとめてコピー',
+    behaviorExportEmpty: 'この期間の記録がありません。',
+    behaviorCopiedMsg: 'コピーしました。AIとのチャットに貼り付けて相談できます。',
+    behaviorCopyFallbackMsg: 'テキストを選択したので、そのままコピーしてください(自動コピーは使えませんでした)。',
+    behaviorExportHeader: 'の行動・社会化の記録',
+    behaviorExportQuestion: '何かパターンや接し方のヒントがあれば教えてください。',
   },
   es: {
     setupTitle: '🐾 ¡Bienvenido a Wanko Note!',
@@ -1485,6 +1540,20 @@ const I18N = {
     dewormSectionTitle: 'Desparasitación/filaria',
     alertNeedName: 'Ingresa el nombre de al menos un perrito.',
     alertNeedOneDog: 'Debe haber al menos un perrito.',
+    behaviorToggleLabel: 'Usar registro de comportamiento/socialización',
+    behaviorMenuBtn: 'Comportamiento',
+    behaviorOverlayTitle: 'Registro de comportamiento/socialización',
+    behaviorRecordBtn: 'Registrar',
+    behaviorHistoryLabel: 'Registros',
+    behaviorExportTitle: 'Preparar para consultar',
+    behaviorFromLabel: 'Desde',
+    behaviorToLabel: 'Hasta',
+    behaviorExportBtn: 'Copiar este período',
+    behaviorExportEmpty: 'No hay registros en este período.',
+    behaviorCopiedMsg: 'Copiado. Puedes pegarlo en un chat con una IA para consultar.',
+    behaviorCopyFallbackMsg: 'Se seleccionó el texto; cópialo manualmente (no se pudo copiar automáticamente).',
+    behaviorExportHeader: 'Registro de comportamiento/socialización de',
+    behaviorExportQuestion: '¿Ves algún patrón o alguna sugerencia sobre cómo manejarlo?',
   },
 };
 
@@ -1530,6 +1599,7 @@ function toggleLang(){
   renderCalendar();
   renderTimeline();
   renderVaccineSchedule();
+  renderBehaviorHistory();
   if(currentDayDate) renderDayEntries(currentDayDate);
 }
 
@@ -1945,6 +2015,12 @@ function createDogRow(dog, opts){
     <div class="setup-colors"></div>
     <div class="setup-field-label" data-i18n="extraLabel">${t('extraLabel')}</div>
     <div class="setup-toggles"></div>
+    ${opts.showDelete ? `
+    <label class="setup-behavior-toggle" style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:12px;color:var(--ink-soft);cursor:pointer;">
+      <input type="checkbox" class="setup-behavior-enabled" ${dog && dog.behaviorEnabled ? 'checked' : ''} style="width:16px;height:16px;flex:0 0 auto;">
+      <span data-i18n="behaviorToggleLabel">${t('behaviorToggleLabel')}</span>
+    </label>
+    ` : ''}
   `;
 
   // --- 耳の形(輪郭だけのプレビュー) ---
@@ -2084,7 +2160,10 @@ function collectDogFromRow(row){
   const mask = !!marks.mask, patch = !!marks.patch;
   const hachiOcher = !!marks.hachiOcher, hachiGray = !!marks.hachiGray;
 
-  return {name, sub, coat:color, color, ears, mask, patch, hachiOcher, hachiGray, pattern};
+  const behaviorToggle = row.querySelector('.setup-behavior-enabled');
+  const behaviorEnabled = behaviorToggle ? behaviorToggle.checked : false;
+
+  return {name, sub, coat:color, color, ears, mask, patch, hachiOcher, hachiGray, pattern, behaviorEnabled};
 }
 
 function createSetupRow(){
@@ -2268,13 +2347,100 @@ $('vaccineCloseBtn').onclick = closeVaccineOverlay;
 $('vaccineOverlay').onclick = (e)=>{ if(e.target.id==='vaccineOverlay') closeVaccineOverlay(); };
 $('vaccineRecordBtn').onclick = ()=>{
   closeVaccineOverlay();
-  pendingReturnToVaccine = true;
+  pendingReturnOverlay = 'vaccine';
   openSheet('vaccine');
 };
 $('dewormRecordBtn').onclick = ()=>{
   closeVaccineOverlay();
-  pendingReturnToVaccine = true;
+  pendingReturnOverlay = 'vaccine';
   openSheet('deworm');
+};
+
+/* ---------- Behavior / socialization -----------------------------------
+   行動・社会化の記録。ワクチン・駆虫と同じくTYPES.behaviorのエントリを
+   保存し、この画面はその履歴表示と、獣医/専門家への相談用にまとめて
+   コピーするためのエクスポート機能を提供する。 -------------------- */
+function updateBehaviorMenuVisibility(){
+  const dog = DOGS.find(d=>d.id===activeDog);
+  const show = !!(dog && dog.behaviorEnabled);
+  const wrap = $('behaviorMenuWrap');
+  if(wrap) wrap.style.display = show ? 'block' : 'none';
+}
+function renderBehaviorHistory(){
+  const all = visibleEntries(logs[activeDog]).filter(e=>e.type==='behavior').slice().sort((a,b)=> b.at.localeCompare(a.at));
+  if(!all.length){
+    $('behaviorHistoryBody').innerHTML = `<div style="font-size:12px;color:var(--ink-soft);">${t('noRecordYet')}</div>`;
+    return;
+  }
+  $('behaviorHistoryBody').innerHTML = `
+    <div style="font-size:12px;font-weight:700;margin-bottom:6px;">${t('behaviorHistoryLabel')} (${all.length})</div>
+    ${all.map(e=>`
+      <div style="padding:8px 0;border-bottom:1px solid var(--line);font-size:12px;">
+        <div style="font-weight:600;">${fmtFullDate(e.at.slice(0,10))}${e.chip ? ' · '+escapeHtml(chipLabel('behavior',e.chip)) : ''}</div>
+        ${e.text ? `<div style="color:var(--ink-soft);margin-top:2px;">${escapeHtml(e.text)}</div>` : ''}
+      </div>
+    `).join('')}
+  `;
+}
+function openBehaviorOverlay(){
+  renderBehaviorHistory();
+  if(!$('behaviorFrom').value){
+    const d = new Date(); d.setMonth(d.getMonth()-1);
+    $('behaviorFrom').value = localDateStr(d);
+  }
+  if(!$('behaviorTo').value){
+    $('behaviorTo').value = todayStr();
+  }
+  $('behaviorExportStatus').textContent = '';
+  $('behaviorExportText').style.display = 'none';
+  $('behaviorOverlay').classList.add('show');
+}
+function closeBehaviorOverlay(){
+  $('behaviorOverlay').classList.remove('show');
+}
+$('behaviorMenuBtn').onclick = openBehaviorOverlay;
+$('behaviorCloseBtn').onclick = closeBehaviorOverlay;
+$('behaviorOverlay').onclick = (e)=>{ if(e.target.id==='behaviorOverlay') closeBehaviorOverlay(); };
+$('behaviorRecordBtn').onclick = ()=>{
+  closeBehaviorOverlay();
+  pendingReturnOverlay = 'behavior';
+  openSheet('behavior');
+};
+$('behaviorExportBtn').onclick = async ()=>{
+  const dog = DOGS.find(d=>d.id===activeDog);
+  const dogName = dog ? dog.name : '';
+  const from = $('behaviorFrom').value;
+  const to = $('behaviorTo').value || todayStr();
+  const all = visibleEntries(logs[activeDog])
+    .filter(e=>e.type==='behavior' && e.at.slice(0,10) >= from && e.at.slice(0,10) <= to)
+    .slice().sort((a,b)=> a.at.localeCompare(b.at));
+
+  if(!all.length){
+    $('behaviorExportStatus').textContent = t('behaviorExportEmpty');
+    $('behaviorExportText').style.display = 'none';
+    return;
+  }
+
+  const lines = all.map(e=>{
+    const dt = e.at.slice(0,10).replace(/-/g,'/') + ' ' + e.at.slice(11,16);
+    const chipPart = e.chip ? `[${chipLabel('behavior', e.chip)}] ` : '';
+    return `${dt} ${chipPart}${e.text || ''}`.trim();
+  });
+
+  const header = `${dogName}${t('behaviorExportHeader')}(${fmtFullDate(from)} 〜 ${fmtFullDate(to)})`;
+  const text = `${header}\n\n${lines.join('\n')}\n\n${t('behaviorExportQuestion')}`;
+
+  const ta = $('behaviorExportText');
+  ta.value = text;
+  ta.style.display = 'block';
+  ta.select();
+  ta.setSelectionRange(0, 999999);
+  try{
+    await navigator.clipboard.writeText(text);
+    $('behaviorExportStatus').textContent = t('behaviorCopiedMsg');
+  }catch(e){
+    $('behaviorExportStatus').textContent = t('behaviorCopyFallbackMsg');
+  }
 };
 
 /* ---------- Manage dogs (add / edit / delete a single dog, without
