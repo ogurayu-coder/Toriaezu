@@ -21,6 +21,7 @@
     --poop:#8C8573;
     --med:#8C8573;
     --note:#B3473A;
+    --good:#B98A2B;
     --card:#FFFDF8;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
@@ -422,6 +423,9 @@
   <div style="margin-bottom:8px;display:none;" id="behaviorMenuWrap">
     <button id="behaviorMenuBtn" style="width:100%;font-size:12px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto;"><ellipse cx="12" cy="16.5" rx="5.5" ry="4.5"/><ellipse cx="6" cy="9.5" rx="2.1" ry="2.8"/><ellipse cx="10.5" cy="6" rx="2.1" ry="2.8"/><ellipse cx="15.5" cy="6" rx="2.1" ry="2.8"/><ellipse cx="19" cy="9.7" rx="2.1" ry="2.8"/></svg><span data-i18n="behaviorMenuBtn">行動・社会化</span></button>
   </div>
+  <div style="margin-bottom:8px;display:none;" id="goodmomentMenuWrap">
+    <button id="goodmomentMenuBtn" style="width:100%;font-size:12px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto;color:var(--good);"><path d="M12 2.5l2.6 5.6 6.1.7-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6-4.5-4.2 6.1-.7z"/></svg><span data-i18n="goodmomentMenuBtn">気づきポイント</span></button>
+  </div>
   <div style="margin-bottom:8px;">
     <button id="manageDogsBtn" data-i18n="manageDogsBtn" style="width:100%;font-size:12px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-weight:600;cursor:pointer;">🐾 犬を管理(追加・編集・削除)</button>
   </div>
@@ -461,6 +465,10 @@
     </div>
     <input type="time" id="entryTime">
     <div class="chiprow" id="chiprow"></div>
+    <div id="recorderWrap" style="display:none;margin:8px 0;">
+      <label data-i18n="recorderLabel" style="display:block;font-size:12px;color:var(--ink-soft);margin-bottom:4px;">記入者(任意)</label>
+      <div class="chiprow" id="recorderRow" style="display:flex;flex-wrap:wrap;"></div>
+    </div>
     <div id="nextDueWrap" style="display:none;margin:8px 0;">
       <label for="entryNextDue" data-i18n="nextDueLabel" style="display:block;font-size:12px;color:var(--ink-soft);margin-bottom:4px;">次回予定日(任意)</label>
       <input type="date" id="entryNextDue" style="width:100%;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-family:'Inter',sans-serif;font-size:13px;margin-bottom:6px;">
@@ -514,6 +522,18 @@
 
     <div class="actions">
       <button class="cancel" id="behaviorCloseBtn" data-i18n="closeBtn">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="goodmomentOverlay">
+  <div class="sheet">
+    <h2 style="display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto;color:var(--good);"><path d="M12 2.5l2.6 5.6 6.1.7-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6-4.5-4.2 6.1-.7z"/></svg><span data-i18n="goodmomentOverlayTitle">気づきポイント</span></h2>
+    <div id="goodmomentBarometer" style="margin-bottom:14px;"></div>
+    <button id="goodmomentRecordBtn" data-i18n="goodmomentRecordBtn" style="width:100%;font-size:12px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-weight:600;cursor:pointer;margin-bottom:14px;">気づきを記録する</button>
+    <div id="goodmomentHistoryBody"></div>
+    <div class="actions">
+      <button class="cancel" id="goodmomentCloseBtn" data-i18n="closeBtn">閉じる</button>
     </div>
   </div>
 </div>
@@ -825,6 +845,7 @@ const TYPES = {
   vaccine: {label:'ワクチン', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-40 12 12)"><line x1="2" y1="9.2" x2="2" y2="14.8"/><line x1="2" y1="12" x2="6" y2="12"/><rect x="6" y="9" width="10" height="6" rx="1"/><line x1="9" y1="9" x2="9" y2="11"/><line x1="13" y1="9" x2="13" y2="11"/><line x1="16" y1="12" x2="21.5" y2="12"/><line x1="21.5" y1="12" x2="22.8" y2="13.3"/></g></svg>', color:'var(--med)', chips:['ボルデテラ','狂犬病','混合2種','混合3種','混合5種','その他']},
   deworm: {label:'駆虫・フィラリア', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="13" rx="4.5" ry="6"/><line x1="12" y1="7" x2="12" y2="19"/><line x1="7.5" y1="10" x2="4" y2="7.5"/><line x1="7.5" y1="13" x2="3" y2="13"/><line x1="7.5" y1="16" x2="4" y2="18.5"/><line x1="16.5" y1="10" x2="20" y2="7.5"/><line x1="16.5" y1="13" x2="21" y2="13"/><line x1="16.5" y1="16" x2="20" y2="18.5"/><line x1="10.3" y1="5.5" x2="9" y2="3"/><line x1="13.7" y1="5.5" x2="15" y2="3"/></svg>', color:'var(--med)', chips:['体内','体外','内外両方','その他']},
   behavior: {label:'行動・社会化', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="16.5" rx="5.5" ry="4.5"/><ellipse cx="6" cy="9.5" rx="2.1" ry="2.8"/><ellipse cx="10.5" cy="6" rx="2.1" ry="2.8"/><ellipse cx="15.5" cy="6" rx="2.1" ry="2.8"/><ellipse cx="19" cy="9.7" rx="2.1" ry="2.8"/></svg>', color:'var(--note)', chips:['家族に対して','他の犬に対して','来客・外部に対して','その他']},
+  goodmoment: {label:'気づき', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l2.6 5.6 6.1.7-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6-4.5-4.2 6.1-.7z"/></svg>', color:'var(--good)', chips:['サインに気づいて手を止めた','要求される前にスペースをあげた','犬から自分に近づいてきた','落ち着いて慣れた','その他']},
   note: {label:'気になったこと', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l.9-3.9L15.6 5.4a1.9 1.9 0 0 1 2.7 0l.3.3a1.9 1.9 0 0 1 0 2.7L8 19l-4 1Z"/><path d="M14.3 6.7l3 3"/></svg>', color:'var(--note)', chips:[]},
 };
 
@@ -843,6 +864,7 @@ const TYPE_LABEL_ES = {
   vaccine: 'Vacuna',
   deworm: 'Desparasitación',
   behavior: 'Comportamiento/socialización',
+  goodmoment: 'Buen momento',
 };
 const CHIP_ES_MAP = {
   meal: {'完食':'Comió todo','少し残した':'Dejó un poco','半分':'Comió la mitad','食べず':'No comió'},
@@ -854,6 +876,7 @@ const CHIP_ES_MAP = {
   vaccine: {'ボルデテラ':'Bordetella','狂犬病':'Rabia','混合2種':'Múltiple (2 en 1)','混合3種':'Múltiple (3 en 1)','混合5種':'Múltiple (5 en 1)','その他':'Otra'},
   deworm: {'体内':'Interno','体外':'Externo','内外両方':'Interno y externo','その他':'Otro'},
   behavior: {'家族に対して':'Con la familia','他の犬に対して':'Con otro perro','来客・外部に対して':'Con visitas/afuera','その他':'Otro'},
+  goodmoment: {'サインに気づいて手を止めた':'Noté la señal y me detuve','要求される前にスペースをあげた':'Le di espacio antes de que lo pidiera','犬から自分に近づいてきた':'Se acercó por su cuenta','落ち着いて慣れた':'Se acostumbró con calma','その他':'Otro'},
 };
 
 // 種別ラベル(ごはん/Comida等)を現在の言語で返す
@@ -877,7 +900,19 @@ let logs = {}; // {dogId: [entries]}
 let pendingType = null;
 let pendingChip = null;
 let pendingDate = null;
-let pendingReturnOverlay = null; // null | 'vaccine' | 'behavior'
+let pendingRecorder = null;
+let pendingReturnOverlay = null; // null | 'vaccine' | 'behavior' | 'goodmoment'
+
+// 気づきポイント用の記入者リスト。マージ機能は入れない方針なので、
+// この端末で使う人の名前だけをローカルに保存する(端末をまたいだ
+// 集計はしない)。
+const RECORDERS_KEY = 'wanko-recorders-demo-v1';
+function loadRecorders(){
+  try{ return JSON.parse(localStorage.getItem(RECORDERS_KEY)) || []; }catch(e){ return []; }
+}
+function saveRecorders(list){
+  try{ localStorage.setItem(RECORDERS_KEY, JSON.stringify(list)); }catch(e){}
+}
 let currentDayDate = null;
 let calState = (()=>{ const d=new Date(); return {year:d.getFullYear(), month:d.getMonth()}; })();
 
@@ -1075,6 +1110,7 @@ function renderAll(){
   renderCalendar();
   renderVaccineSchedule();
   updateBehaviorMenuVisibility();
+  updateGoodmomentMenuVisibility();
 }
 
 /* ---------- Calendar ---------- */
@@ -1245,6 +1281,7 @@ function openDayDetail(dateStr){
   const dogForDay = DOGS.find(d=>d.id===activeDog);
   Object.keys(TYPES).forEach(key=>{
     if(key==='behavior' && !(dogForDay && dogForDay.behaviorEnabled)) return;
+    if(key==='goodmoment' && !(dogForDay && dogForDay.goodmomentEnabled)) return;
     const t = TYPES[key];
     const btn = document.createElement('button');
     btn.className = `qbtn ${key}`;
@@ -1269,6 +1306,7 @@ $('dayOverlay').onclick = (e)=>{ if(e.target.id==='dayOverlay') closeDayOverlay(
 function openSheet(type, dateOverride){
   pendingType = type;
   pendingChip = null;
+  pendingRecorder = null;
   pendingDate = dateOverride || todayStr();
   const t = TYPES[type];
   $('sheetIcon').innerHTML = t.icon;
@@ -1312,6 +1350,10 @@ function openSheet(type, dateOverride){
     };
     chiprow.appendChild(chip);
   });
+  const recorderWrap = $('recorderWrap');
+  recorderWrap.style.display = (type==='goodmoment') ? 'block' : 'none';
+  if(type==='goodmoment') renderRecorderChips();
+
   const nextDueWrap = $('nextDueWrap');
   const isVaccineType = (type==='vaccine' || type==='deworm');
   nextDueWrap.style.display = isVaccineType ? 'block' : 'none';
@@ -1343,7 +1385,42 @@ function closeSheet(){
     pendingReturnOverlay = null;
     if(target==='vaccine') openVaccineOverlay();
     else if(target==='behavior') openBehaviorOverlay();
+    else if(target==='goodmoment') openGoodmomentOverlay();
   }
+}
+
+// 気づきポイントの記入者チップ。保存済みの名前をタップで選択、
+// ＋で新しい名前をこの端末に追加する(端末ごとにローカル管理)。
+function renderRecorderChips(){
+  const wrap = $('recorderRow');
+  wrap.innerHTML = '';
+  loadRecorders().forEach(name=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.textContent = name;
+    chip.style.setProperty('--c', 'var(--good)');
+    if(pendingRecorder === name) chip.classList.add('sel');
+    chip.onclick = ()=>{
+      const already = chip.classList.contains('sel');
+      wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('sel'));
+      if(!already){ chip.classList.add('sel'); pendingRecorder = name; } else { pendingRecorder = null; }
+    };
+    wrap.appendChild(chip);
+  });
+  const addBtn = document.createElement('div');
+  addBtn.className = 'chip';
+  addBtn.textContent = '＋';
+  addBtn.style.setProperty('--c', 'var(--good)');
+  addBtn.onclick = ()=>{
+    const name = (prompt(t('recorderAddPrompt')) || '').trim();
+    if(!name) return;
+    const list = loadRecorders();
+    if(!list.includes(name)) list.push(name);
+    saveRecorders(list);
+    pendingRecorder = name;
+    renderRecorderChips();
+  };
+  wrap.appendChild(addBtn);
 }
 
 // Reads the latest saved data fresh from storage, applies `mutator` to it,
@@ -1378,6 +1455,7 @@ async function saveEntry(){
     chip: pendingChip,
     text: text,
     nextDue: nextDue,
+    recordedBy: pendingType==='goodmoment' ? pendingRecorder : null,
   };
   await withFreshLogs(()=>{
     if(!logs[activeDog]) logs[activeDog]=[];
@@ -1480,6 +1558,20 @@ const I18N = {
     behaviorCopyFallbackMsg: 'テキストを選択したので、そのままコピーしてください(自動コピーは使えませんでした)。',
     behaviorExportHeader: 'の行動・社会化の記録',
     behaviorExportQuestion: '何かパターンや接し方のヒントがあれば教えてください。',
+    goodmomentToggleLabel: '気づきポイントを使う',
+    goodmomentMenuBtn: '気づきポイント',
+    goodmomentOverlayTitle: '気づきポイント',
+    goodmomentRecordBtn: '気づきを記録する',
+    recorderLabel: '記入者(任意)',
+    recorderAddPrompt: '記入者の名前を入力してください',
+    goodmomentUnnamed: '未設定',
+    goodmomentPointsSuffix: 'pt',
+    goodmomentNextLevelTemplate: '次は「{level}」まであと{n}pt',
+    goodmomentMaxLevelMsg: '最高レベルです',
+    goodLv0: '様子見中',
+    goodLv1: '距離が縮んできた',
+    goodLv2: '阿吽の呼吸',
+    goodLv3: '相思相犬',
   },
   es: {
     setupTitle: '🐾 ¡Bienvenido a Wanko Note!',
@@ -1554,6 +1646,20 @@ const I18N = {
     behaviorCopyFallbackMsg: 'Se seleccionó el texto; cópialo manualmente (no se pudo copiar automáticamente).',
     behaviorExportHeader: 'Registro de comportamiento/socialización de',
     behaviorExportQuestion: '¿Ves algún patrón o alguna sugerencia sobre cómo manejarlo?',
+    goodmomentToggleLabel: 'Usar puntos de buenos momentos',
+    goodmomentMenuBtn: 'Buenos momentos',
+    goodmomentOverlayTitle: 'Puntos de buenos momentos',
+    goodmomentRecordBtn: 'Registrar un buen momento',
+    recorderLabel: 'Quién lo registra (opcional)',
+    recorderAddPrompt: 'Escribe el nombre de quién registra',
+    goodmomentUnnamed: 'Sin nombre',
+    goodmomentPointsSuffix: 'pt',
+    goodmomentNextLevelTemplate: 'Faltan {n}pt para "{level}"',
+    goodmomentMaxLevelMsg: 'Nivel máximo alcanzado',
+    goodLv0: 'Conociéndose',
+    goodLv1: 'Cada vez más cerca',
+    goodLv2: 'En sintonía',
+    goodLv3: 'Complicidad total',
   },
 };
 
@@ -2020,6 +2126,10 @@ function createDogRow(dog, opts){
       <input type="checkbox" class="setup-behavior-enabled" ${dog && dog.behaviorEnabled ? 'checked' : ''} style="width:16px;height:16px;flex:0 0 auto;">
       <span data-i18n="behaviorToggleLabel">${t('behaviorToggleLabel')}</span>
     </label>
+    <label class="setup-behavior-toggle" style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:var(--ink-soft);cursor:pointer;">
+      <input type="checkbox" class="setup-goodmoment-enabled" ${dog && dog.goodmomentEnabled ? 'checked' : ''} style="width:16px;height:16px;flex:0 0 auto;">
+      <span data-i18n="goodmomentToggleLabel">${t('goodmomentToggleLabel')}</span>
+    </label>
     ` : ''}
   `;
 
@@ -2162,8 +2272,10 @@ function collectDogFromRow(row){
 
   const behaviorToggle = row.querySelector('.setup-behavior-enabled');
   const behaviorEnabled = behaviorToggle ? behaviorToggle.checked : false;
+  const goodmomentToggle = row.querySelector('.setup-goodmoment-enabled');
+  const goodmomentEnabled = goodmomentToggle ? goodmomentToggle.checked : false;
 
-  return {name, sub, coat:color, color, ears, mask, patch, hachiOcher, hachiGray, pattern, behaviorEnabled};
+  return {name, sub, coat:color, color, ears, mask, patch, hachiOcher, hachiGray, pattern, behaviorEnabled, goodmomentEnabled};
 }
 
 function createSetupRow(){
@@ -2441,6 +2553,98 @@ $('behaviorExportBtn').onclick = async ()=>{
   }catch(e){
     $('behaviorExportStatus').textContent = t('behaviorCopyFallbackMsg');
   }
+};
+
+/* ---------- Good moments / barometer (気づきポイント) --------------------
+   解釈を含む自由記述ではなく、選択式の「気づき」だけを積み上げる専用の
+   記録種別。犬ごとに全員分を合算したバロメーターと、記入者ごとの内訳を
+   表示する。端末をまたいだ合算(マージ)はあえて行わない — 各端末は
+   その端末で記録した分だけを表示する。 -------------------------------- */
+const GOOD_LEVELS = [
+  {min:0,  key:'goodLv0'},
+  {min:5,  key:'goodLv1'},
+  {min:15, key:'goodLv2'},
+  {min:30, key:'goodLv3'},
+];
+function goodLevelFor(count){
+  let level = GOOD_LEVELS[0];
+  GOOD_LEVELS.forEach(l=>{ if(count >= l.min) level = l; });
+  return level;
+}
+function nextGoodLevel(count){
+  return GOOD_LEVELS.find(l=>l.min > count) || null;
+}
+function updateGoodmomentMenuVisibility(){
+  const dog = DOGS.find(d=>d.id===activeDog);
+  const show = !!(dog && dog.goodmomentEnabled);
+  const wrap = $('goodmomentMenuWrap');
+  if(wrap) wrap.style.display = show ? 'block' : 'none';
+}
+function renderGoodmomentBarometer(all){
+  const total = all.length;
+  const level = goodLevelFor(total);
+  const next = nextGoodLevel(total);
+  const span = next ? (next.min - level.min) : 1;
+  const progressInLevel = next ? (total - level.min) : 1;
+  const pct = next ? Math.max(0, Math.min(100, Math.round(progressInLevel / span * 100))) : 100;
+
+  const byRecorder = {};
+  all.forEach(e=>{
+    const name = e.recordedBy || t('goodmomentUnnamed');
+    byRecorder[name] = (byRecorder[name]||0) + 1;
+  });
+  const recorderRows = Object.keys(byRecorder).sort((a,b)=> byRecorder[b]-byRecorder[a])
+    .map(name=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;"><span>${escapeHtml(name)}</span><span style="color:var(--ink-soft);">${byRecorder[name]}${t('goodmomentPointsSuffix')}</span></div>`).join('');
+
+  const nextLine = next
+    ? `<div style="font-size:11px;color:var(--ink-soft);margin-top:6px;">${t('goodmomentNextLevelTemplate').replace('{level}', t(next.key)).replace('{n}', next.min-total)}</div>`
+    : `<div style="font-size:11px;color:var(--ink-soft);margin-top:6px;">${t('goodmomentMaxLevelMsg')}</div>`;
+
+  $('goodmomentBarometer').innerHTML = `
+    <div style="border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--card);">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+        <div style="font-weight:700;font-size:14px;color:var(--good);">${t(level.key)}</div>
+        <div style="font-size:11px;color:var(--ink-soft);">${total}${t('goodmomentPointsSuffix')}</div>
+      </div>
+      <div style="height:10px;border-radius:6px;background:var(--paper-deep);overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:var(--good);border-radius:6px;"></div>
+      </div>
+      ${nextLine}
+      ${recorderRows ? `<div style="margin-top:10px;border-top:1px solid var(--line);padding-top:8px;">${recorderRows}</div>` : ''}
+    </div>
+  `;
+}
+function renderGoodmomentHistory(){
+  const all = visibleEntries(logs[activeDog]).filter(e=>e.type==='goodmoment').slice().sort((a,b)=> b.at.localeCompare(a.at));
+  renderGoodmomentBarometer(all);
+  if(!all.length){
+    $('goodmomentHistoryBody').innerHTML = `<div style="font-size:12px;color:var(--ink-soft);">${t('noRecordYet')}</div>`;
+    return;
+  }
+  $('goodmomentHistoryBody').innerHTML = `
+    <div style="font-size:12px;font-weight:700;margin-bottom:6px;">${t('behaviorHistoryLabel')} (${all.length})</div>
+    ${all.map(e=>`
+      <div style="padding:8px 0;border-bottom:1px solid var(--line);font-size:12px;">
+        <div style="font-weight:600;">${fmtFullDate(e.at.slice(0,10))}${e.chip ? ' · '+escapeHtml(chipLabel('goodmoment',e.chip)) : ''}${e.recordedBy ? ' · '+escapeHtml(e.recordedBy) : ''}</div>
+        ${e.text ? `<div style="color:var(--ink-soft);margin-top:2px;">${escapeHtml(e.text)}</div>` : ''}
+      </div>
+    `).join('')}
+  `;
+}
+function openGoodmomentOverlay(){
+  renderGoodmomentHistory();
+  $('goodmomentOverlay').classList.add('show');
+}
+function closeGoodmomentOverlay(){
+  $('goodmomentOverlay').classList.remove('show');
+}
+$('goodmomentMenuBtn').onclick = openGoodmomentOverlay;
+$('goodmomentCloseBtn').onclick = closeGoodmomentOverlay;
+$('goodmomentOverlay').onclick = (e)=>{ if(e.target.id==='goodmomentOverlay') closeGoodmomentOverlay(); };
+$('goodmomentRecordBtn').onclick = ()=>{
+  closeGoodmomentOverlay();
+  pendingReturnOverlay = 'goodmoment';
+  openSheet('goodmoment');
 };
 
 /* ---------- Manage dogs (add / edit / delete a single dog, without
