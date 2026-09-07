@@ -845,7 +845,7 @@ const TYPES = {
   vaccine: {label:'ワクチン', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-40 12 12)"><line x1="2" y1="9.2" x2="2" y2="14.8"/><line x1="2" y1="12" x2="6" y2="12"/><rect x="6" y="9" width="10" height="6" rx="1"/><line x1="9" y1="9" x2="9" y2="11"/><line x1="13" y1="9" x2="13" y2="11"/><line x1="16" y1="12" x2="21.5" y2="12"/><line x1="21.5" y1="12" x2="22.8" y2="13.3"/></g></svg>', color:'var(--med)', chips:['ボルデテラ','狂犬病','混合2種','混合3種','混合5種','その他']},
   deworm: {label:'駆虫・フィラリア', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="13" rx="4.5" ry="6"/><line x1="12" y1="7" x2="12" y2="19"/><line x1="7.5" y1="10" x2="4" y2="7.5"/><line x1="7.5" y1="13" x2="3" y2="13"/><line x1="7.5" y1="16" x2="4" y2="18.5"/><line x1="16.5" y1="10" x2="20" y2="7.5"/><line x1="16.5" y1="13" x2="21" y2="13"/><line x1="16.5" y1="16" x2="20" y2="18.5"/><line x1="10.3" y1="5.5" x2="9" y2="3"/><line x1="13.7" y1="5.5" x2="15" y2="3"/></svg>', color:'var(--med)', chips:['体内','体外','内外両方','その他']},
   behavior: {label:'行動・社会化', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="16.5" rx="5.5" ry="4.5"/><ellipse cx="6" cy="9.5" rx="2.1" ry="2.8"/><ellipse cx="10.5" cy="6" rx="2.1" ry="2.8"/><ellipse cx="15.5" cy="6" rx="2.1" ry="2.8"/><ellipse cx="19" cy="9.7" rx="2.1" ry="2.8"/></svg>', color:'var(--note)', chips:['家族に対して','他の犬に対して','来客・外部に対して','その他']},
-  goodmoment: {label:'気づき', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l2.6 5.6 6.1.7-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6-4.5-4.2 6.1-.7z"/></svg>', color:'var(--good)', chips:['要求される前に道を譲った','同じ部屋にいることができた','サインに気づいて手を止めた','自分から近づいてきた','同じ部屋でくつろいでいた','同じ部屋で伏せをして寝た','落ち着いて新しいものに慣れた','目を閉じて眠った','その他']},
+  goodmoment: {label:'気づき', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l2.6 5.6 6.1.7-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6-4.5-4.2 6.1-.7z"/></svg>', color:'var(--good)', chips:['要求される前に道を譲った','同じ部屋にいることができた','サインに気づいて手を止めた','自分から近づいてきた','同じ部屋でくつろいでいた','同じ部屋で伏せをして寝た','落ち着いて新しいものに慣れた','目を閉じて眠った','その他','びっくりして固まった・逃げた','怖がって粗相をした','唸った・威嚇した','その他(後退)']},
   note: {label:'気になったこと', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l.9-3.9L15.6 5.4a1.9 1.9 0 0 1 2.7 0l.3.3a1.9 1.9 0 0 1 0 2.7L8 19l-4 1Z"/><path d="M14.3 6.7l3 3"/></svg>', color:'var(--note)', chips:[]},
 };
 
@@ -876,7 +876,7 @@ const CHIP_ES_MAP = {
   vaccine: {'ボルデテラ':'Bordetella','狂犬病':'Rabia','混合2種':'Múltiple (2 en 1)','混合3種':'Múltiple (3 en 1)','混合5種':'Múltiple (5 en 1)','その他':'Otra'},
   deworm: {'体内':'Interno','体外':'Externo','内外両方':'Interno y externo','その他':'Otro'},
   behavior: {'家族に対して':'Con la familia','他の犬に対して':'Con otro perro','来客・外部に対して':'Con visitas/afuera','その他':'Otro'},
-  goodmoment: {'要求される前に道を譲った':'Le cedí el paso antes de que lo pidiera','同じ部屋にいることができた':'Pudo estar en la misma habitación','サインに気づいて手を止めた':'Noté la señal y me detuve','自分から近づいてきた':'Se acercó por su cuenta','同じ部屋でくつろいでいた':'Estuvo relajado en la misma habitación','同じ部屋で伏せをして寝た':'Se echó y durmió en la misma habitación','落ち着いて新しいものに慣れた':'Se acostumbró con calma a algo nuevo','目を閉じて眠った':'Cerró los ojos y durmió profundamente','その他':'Otro'},
+  goodmoment: {'要求される前に道を譲った':'Le cedí el paso antes de que lo pidiera','同じ部屋にいることができた':'Pudo estar en la misma habitación','サインに気づいて手を止めた':'Noté la señal y me detuve','自分から近づいてきた':'Se acercó por su cuenta','同じ部屋でくつろいでいた':'Estuvo relajado en la misma habitación','同じ部屋で伏せをして寝た':'Se echó y durmió en la misma habitación','落ち着いて新しいものに慣れた':'Se acostumbró con calma a algo nuevo','目を閉じて眠った':'Cerró los ojos y durmió profundamente','その他':'Otro','びっくりして固まった・逃げた':'Se asustó, se quedó paralizado o huyó','怖がって粗相をした':'Tuvo un accidente por miedo','唸った・威嚇した':'Gruñó o amenazó','その他(後退)':'Otro (retroceso)'},
 };
 
 // 種別ラベル(ごはん/Comida等)を現在の言語で返す
@@ -1343,7 +1343,8 @@ function openSheet(type, dateOverride){
     const chip = document.createElement('div');
     chip.className='chip';
     chip.textContent = chipLabel(type, c); // 表示のみ翻訳。保存はcの日本語原文のまま
-    chip.style.setProperty('--c', t.color);
+    const isSetback = (type==='goodmoment' && GOOD_SETBACK_CHIPS.includes(c));
+    chip.style.setProperty('--c', isSetback ? 'var(--note)' : t.color);
     chip.onclick = ()=>{
       const already = chip.classList.contains('sel');
       chiprow.querySelectorAll('.chip').forEach(x=>x.classList.remove('sel'));
@@ -2562,11 +2563,24 @@ $('behaviorExportBtn').onclick = async ()=>{
    表示する。端末をまたいだ合算(マージ)はあえて行わない — 各端末は
    その端末で記録した分だけを表示する。 -------------------------------- */
 const GOOD_LEVELS = [
-  {min:0,  key:'goodLv0', chips:['要求される前に道を譲った','同じ部屋にいることができた','サインに気づいて手を止めた']},
-  {min:5,  key:'goodLv1', chips:['自分から近づいてきた','同じ部屋でくつろいでいた']},
-  {min:15, key:'goodLv2', chips:['同じ部屋で伏せをして寝た','落ち着いて新しいものに慣れた']},
-  {min:30, key:'goodLv3', chips:['目を閉じて眠った']},
+  {min:0,   key:'goodLv0', chips:['要求される前に道を譲った','同じ部屋にいることができた','サインに気づいて手を止めた']},
+  {min:20,  key:'goodLv1', chips:['自分から近づいてきた','同じ部屋でくつろいでいた']},
+  {min:50,  key:'goodLv2', chips:['同じ部屋で伏せをして寝た','落ち着いて新しいものに慣れた']},
+  {min:100, key:'goodLv3', chips:['目を閉じて眠った']},
 ];
+// 後退(警戒が強く出た瞬間)は、小さな加点を何度も打ち消すくらいの重みを
+// 持たせる。誰の責任かではなく、犬の状態についての事実として記録する。
+const GOOD_SETBACK_CHIPS = ['びっくりして固まった・逃げた','怖がって粗相をした','唸った・威嚇した','その他(後退)'];
+const GOOD_POINTS = {
+  'びっくりして固まった・逃げた': -3,
+  '怖がって粗相をした': -5,
+  '唸った・威嚇した': -5,
+  'その他(後退)': -3,
+};
+function pointsForEntry(e){
+  if(e.chip && Object.prototype.hasOwnProperty.call(GOOD_POINTS, e.chip)) return GOOD_POINTS[e.chip];
+  return 1; // 後退チップ以外の気づきは一律+1
+}
 function goodLevelFor(count){
   let level = GOOD_LEVELS[0];
   GOOD_LEVELS.forEach(l=>{ if(count >= l.min) level = l; });
@@ -2577,15 +2591,16 @@ function nextGoodLevel(count){
 }
 // その犬の現在のポイント数までに解放されている段階のチップだけを
 // タップできるようにする(まだ届いていない段階の項目は表示しない)。
+// 後退チップは段階に関わらず常に選べる。
 function goodmomentPointsFor(dogId){
-  return visibleEntries(logs[dogId]||[]).filter(e=>e.type==='goodmoment').length;
+  return visibleEntries(logs[dogId]||[]).filter(e=>e.type==='goodmoment').reduce((sum,e)=> sum + pointsForEntry(e), 0);
 }
 function availableGoodmomentChips(dogId){
-  const total = goodmomentPointsFor(dogId);
+  const total = Math.max(0, goodmomentPointsFor(dogId));
   let chips = [];
   GOOD_LEVELS.forEach(l=>{ if(total >= l.min) chips = chips.concat(l.chips); });
   chips.push('その他');
-  return chips;
+  return chips.concat(GOOD_SETBACK_CHIPS);
 }
 function updateGoodmomentMenuVisibility(){
   const dog = DOGS.find(d=>d.id===activeDog);
@@ -2594,23 +2609,26 @@ function updateGoodmomentMenuVisibility(){
   if(wrap) wrap.style.display = show ? 'block' : 'none';
 }
 function renderGoodmomentBarometer(all){
-  const total = all.length;
-  const level = goodLevelFor(total);
-  const next = nextGoodLevel(total);
+  const total = all.reduce((sum,e)=> sum + pointsForEntry(e), 0);
+  const clamped = Math.max(0, total);
+  const level = goodLevelFor(clamped);
+  const next = nextGoodLevel(clamped);
   const span = next ? (next.min - level.min) : 1;
-  const progressInLevel = next ? (total - level.min) : 1;
+  const progressInLevel = next ? (clamped - level.min) : 1;
   const pct = next ? Math.max(0, Math.min(100, Math.round(progressInLevel / span * 100))) : 100;
 
+  // 記入者ごとの内訳は「記録した回数」だけを見せる。後退を正直に記録
+  // しても個人の数字が下がらないようにするため、ここでは点数を使わない。
   const byRecorder = {};
   all.forEach(e=>{
     const name = e.recordedBy || t('goodmomentUnnamed');
     byRecorder[name] = (byRecorder[name]||0) + 1;
   });
   const recorderRows = Object.keys(byRecorder).sort((a,b)=> byRecorder[b]-byRecorder[a])
-    .map(name=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;"><span>${escapeHtml(name)}</span><span style="color:var(--ink-soft);">${byRecorder[name]}${t('goodmomentPointsSuffix')}</span></div>`).join('');
+    .map(name=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;"><span>${escapeHtml(name)}</span><span style="color:var(--ink-soft);">×${byRecorder[name]}</span></div>`).join('');
 
   const nextLine = next
-    ? `<div style="font-size:11px;color:var(--ink-soft);margin-top:6px;">${t('goodmomentNextLevelTemplate').replace('{level}', t(next.key)).replace('{n}', next.min-total)}</div>`
+    ? `<div style="font-size:11px;color:var(--ink-soft);margin-top:6px;">${t('goodmomentNextLevelTemplate').replace('{level}', t(next.key)).replace('{n}', next.min-clamped)}</div>`
     : `<div style="font-size:11px;color:var(--ink-soft);margin-top:6px;">${t('goodmomentMaxLevelMsg')}</div>`;
 
   $('goodmomentBarometer').innerHTML = `
@@ -2636,12 +2654,15 @@ function renderGoodmomentHistory(){
   }
   $('goodmomentHistoryBody').innerHTML = `
     <div style="font-size:12px;font-weight:700;margin-bottom:6px;">${t('behaviorHistoryLabel')} (${all.length})</div>
-    ${all.map(e=>`
+    ${all.map(e=>{
+      const pts = pointsForEntry(e);
+      const ptsLabel = (pts>=0?'+':'') + pts + t('goodmomentPointsSuffix');
+      return `
       <div style="padding:8px 0;border-bottom:1px solid var(--line);font-size:12px;">
-        <div style="font-weight:600;">${fmtFullDate(e.at.slice(0,10))}${e.chip ? ' · '+escapeHtml(chipLabel('goodmoment',e.chip)) : ''}${e.recordedBy ? ' · '+escapeHtml(e.recordedBy) : ''}</div>
+        <div style="font-weight:600;">${fmtFullDate(e.at.slice(0,10))}${e.chip ? ' · '+escapeHtml(chipLabel('goodmoment',e.chip)) : ''}${e.recordedBy ? ' · '+escapeHtml(e.recordedBy) : ''}<span style="color:${pts<0?'var(--note)':'var(--good)'};margin-left:6px;">${ptsLabel}</span></div>
         ${e.text ? `<div style="color:var(--ink-soft);margin-top:2px;">${escapeHtml(e.text)}</div>` : ''}
       </div>
-    `).join('')}
+    `;}).join('')}
   `;
 }
 function openGoodmomentOverlay(){
