@@ -2628,7 +2628,7 @@ function renderGoodmomentBarometer(all){
     .map(name=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;"><span>${escapeHtml(name)}</span><span style="color:var(--ink-soft);">×${byRecorder[name]}</span></div>`).join('');
 
   const nextLine = next
-    ? `<div style="font-size:11px;color:var(--ink-soft);margin-top:6px;">${t('goodmomentNextLevelTemplate').replace('{level}', t(next.key)).replace('{n}', next.min-clamped)}</div>`
+    ? `<div style="font-size:11px;color:var(--ink-soft);margin-top:6px;">${t('goodmomentNextLevelTemplate').replace('{level}', t(next.key)).replace('{n}', next.min-total)}</div>`
     : `<div style="font-size:11px;color:var(--ink-soft);margin-top:6px;">${t('goodmomentMaxLevelMsg')}</div>`;
 
   $('goodmomentBarometer').innerHTML = `
