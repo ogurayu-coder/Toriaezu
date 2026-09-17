@@ -465,10 +465,6 @@
     </div>
     <input type="time" id="entryTime">
     <div class="chiprow" id="chiprow"></div>
-    <div id="recorderWrap" style="display:none;margin:8px 0;">
-      <label data-i18n="recorderLabel" style="display:block;font-size:12px;color:var(--ink-soft);margin-bottom:4px;">記入者(任意)</label>
-      <div class="chiprow" id="recorderRow" style="display:flex;flex-wrap:wrap;"></div>
-    </div>
     <div id="nextDueWrap" style="display:none;margin:8px 0;">
       <label for="entryNextDue" data-i18n="nextDueLabel" style="display:block;font-size:12px;color:var(--ink-soft);margin-bottom:4px;">次回予定日(任意)</label>
       <input type="date" id="entryNextDue" style="width:100%;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-family:'Inter',sans-serif;font-size:13px;margin-bottom:6px;">
@@ -900,19 +896,8 @@ let logs = {}; // {dogId: [entries]}
 let pendingType = null;
 let pendingChip = null;
 let pendingDate = null;
-let pendingRecorder = null;
 let pendingReturnOverlay = null; // null | 'vaccine' | 'behavior' | 'goodmoment'
 
-// 気づきポイント用の記入者リスト。マージ機能は入れない方針なので、
-// この端末で使う人の名前だけをローカルに保存する(端末をまたいだ
-// 集計はしない)。
-const RECORDERS_KEY = 'wanko-recorders-demo-v1';
-function loadRecorders(){
-  try{ return JSON.parse(localStorage.getItem(RECORDERS_KEY)) || []; }catch(e){ return []; }
-}
-function saveRecorders(list){
-  try{ localStorage.setItem(RECORDERS_KEY, JSON.stringify(list)); }catch(e){}
-}
 let currentDayDate = null;
 let calState = (()=>{ const d=new Date(); return {year:d.getFullYear(), month:d.getMonth()}; })();
 
@@ -1306,7 +1291,6 @@ $('dayOverlay').onclick = (e)=>{ if(e.target.id==='dayOverlay') closeDayOverlay(
 function openSheet(type, dateOverride){
   pendingType = type;
   pendingChip = null;
-  pendingRecorder = null;
   pendingDate = dateOverride || todayStr();
   const t = TYPES[type];
   $('sheetIcon').innerHTML = t.icon;
@@ -1352,10 +1336,6 @@ function openSheet(type, dateOverride){
     };
     chiprow.appendChild(chip);
   });
-  const recorderWrap = $('recorderWrap');
-  recorderWrap.style.display = (type==='goodmoment') ? 'block' : 'none';
-  if(type==='goodmoment') renderRecorderChips();
-
   const nextDueWrap = $('nextDueWrap');
   const isVaccineType = (type==='vaccine' || type==='deworm');
   nextDueWrap.style.display = isVaccineType ? 'block' : 'none';
@@ -1391,40 +1371,6 @@ function closeSheet(){
   }
 }
 
-// 気づきポイントの記入者チップ。保存済みの名前をタップで選択、
-// ＋で新しい名前をこの端末に追加する(端末ごとにローカル管理)。
-function renderRecorderChips(){
-  const wrap = $('recorderRow');
-  wrap.innerHTML = '';
-  loadRecorders().forEach(name=>{
-    const chip = document.createElement('div');
-    chip.className = 'chip';
-    chip.textContent = name;
-    chip.style.setProperty('--c', 'var(--good)');
-    if(pendingRecorder === name) chip.classList.add('sel');
-    chip.onclick = ()=>{
-      const already = chip.classList.contains('sel');
-      wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('sel'));
-      if(!already){ chip.classList.add('sel'); pendingRecorder = name; } else { pendingRecorder = null; }
-    };
-    wrap.appendChild(chip);
-  });
-  const addBtn = document.createElement('div');
-  addBtn.className = 'chip';
-  addBtn.textContent = '＋';
-  addBtn.style.setProperty('--c', 'var(--good)');
-  addBtn.onclick = ()=>{
-    const name = (prompt(t('recorderAddPrompt')) || '').trim();
-    if(!name) return;
-    const list = loadRecorders();
-    if(!list.includes(name)) list.push(name);
-    saveRecorders(list);
-    pendingRecorder = name;
-    renderRecorderChips();
-  };
-  wrap.appendChild(addBtn);
-}
-
 // Reads the latest saved data fresh from storage, applies `mutator` to it,
 // then saves. This avoids a stale tab (holding old data in memory) blindly
 // overwriting newer changes saved from another tab/session.
@@ -1457,7 +1403,7 @@ async function saveEntry(){
     chip: pendingChip,
     text: text,
     nextDue: nextDue,
-    recordedBy: pendingType==='goodmoment' ? pendingRecorder : null,
+    recordedBy: null,
   };
   await withFreshLogs(()=>{
     if(!logs[activeDog]) logs[activeDog]=[];
@@ -1564,9 +1510,6 @@ const I18N = {
     goodmomentMenuBtn: '気づきポイント',
     goodmomentOverlayTitle: '気づきポイント',
     goodmomentRecordBtn: '気づきを記録する',
-    recorderLabel: '記入者(任意)',
-    recorderAddPrompt: '記入者の名前を入力してください',
-    goodmomentUnnamed: '未設定',
     goodmomentPointsSuffix: 'pt',
     goodmomentNextLevelTemplate: '次は「{level}」まであと{n}pt',
     goodmomentMaxLevelMsg: '最高レベルです',
@@ -1652,9 +1595,6 @@ const I18N = {
     goodmomentMenuBtn: 'Buenos momentos',
     goodmomentOverlayTitle: 'Puntos de buenos momentos',
     goodmomentRecordBtn: 'Registrar un buen momento',
-    recorderLabel: 'Quién lo registra (opcional)',
-    recorderAddPrompt: 'Escribe el nombre de quién registra',
-    goodmomentUnnamed: 'Sin nombre',
     goodmomentPointsSuffix: 'pt',
     goodmomentNextLevelTemplate: 'Faltan {n}pt para "{level}"',
     goodmomentMaxLevelMsg: 'Nivel máximo alcanzado',
@@ -2617,16 +2557,6 @@ function renderGoodmomentBarometer(all){
   const progressInLevel = next ? (clamped - level.min) : 1;
   const pct = next ? Math.max(0, Math.min(100, Math.round(progressInLevel / span * 100))) : 100;
 
-  // 記入者ごとの内訳は「記録した回数」だけを見せる。後退を正直に記録
-  // しても個人の数字が下がらないようにするため、ここでは点数を使わない。
-  const byRecorder = {};
-  all.forEach(e=>{
-    const name = e.recordedBy || t('goodmomentUnnamed');
-    byRecorder[name] = (byRecorder[name]||0) + 1;
-  });
-  const recorderRows = Object.keys(byRecorder).sort((a,b)=> byRecorder[b]-byRecorder[a])
-    .map(name=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;"><span>${escapeHtml(name)}</span><span style="color:var(--ink-soft);">×${byRecorder[name]}</span></div>`).join('');
-
   const nextLine = next
     ? `<div style="font-size:11px;color:var(--ink-soft);margin-top:6px;">${t('goodmomentNextLevelTemplate').replace('{level}', t(next.key)).replace('{n}', next.min-total)}</div>`
     : `<div style="font-size:11px;color:var(--ink-soft);margin-top:6px;">${t('goodmomentMaxLevelMsg')}</div>`;
@@ -2641,7 +2571,6 @@ function renderGoodmomentBarometer(all){
         <div style="height:100%;width:${pct}%;background:var(--good);border-radius:6px;"></div>
       </div>
       ${nextLine}
-      ${recorderRows ? `<div style="margin-top:10px;border-top:1px solid var(--line);padding-top:8px;">${recorderRows}</div>` : ''}
     </div>
   `;
 }
@@ -2659,7 +2588,7 @@ function renderGoodmomentHistory(){
       const ptsLabel = (pts>=0?'+':'') + pts + t('goodmomentPointsSuffix');
       return `
       <div style="padding:8px 0;border-bottom:1px solid var(--line);font-size:12px;">
-        <div style="font-weight:600;">${fmtFullDate(e.at.slice(0,10))}${e.chip ? ' · '+escapeHtml(chipLabel('goodmoment',e.chip)) : ''}${e.recordedBy ? ' · '+escapeHtml(e.recordedBy) : ''}<span style="color:${pts<0?'var(--note)':'var(--good)'};margin-left:6px;">${ptsLabel}</span></div>
+        <div style="font-weight:600;">${fmtFullDate(e.at.slice(0,10))}${e.chip ? ' · '+escapeHtml(chipLabel('goodmoment',e.chip)) : ''}<span style="color:${pts<0?'var(--note)':'var(--good)'};margin-left:6px;">${ptsLabel}</span></div>
         ${e.text ? `<div style="color:var(--ink-soft);margin-top:2px;">${escapeHtml(e.text)}</div>` : ''}
       </div>
     `;}).join('')}
