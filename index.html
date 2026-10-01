@@ -2779,10 +2779,13 @@ function renderGoodmomentHistory(){
       return `
       <div style="padding:8px 0;border-bottom:1px solid var(--line);font-size:12px;">
         <div style="font-weight:600;">${fmtFullDate(e.at.slice(0,10))}${e.chip ? ' · '+escapeHtml(chipLabel('goodmoment',e.chip)) : ''}<span style="color:${pts<0?'var(--note)':'var(--good)'};margin-left:6px;">${ptsLabel}</span></div>
-        ${e.text ? `<div style="color:var(--ink-soft);margin-top:2px;">${escapeHtml(e.text)}</div>` : ''}
+        ${e.text ? `<div style="color:var(--ink-soft);margin-top:2px;${LANG==='es'?'font-size:11px;':''}">${escapeHtml(e.text)}</div>` : ''}
+        ${(e.text && LANG==='es') ? `<div class="text-es" data-text="${escapeHtml(e.text)}" style="font-size:13px;margin-top:2px;">ES ・ …</div>` : ''}
       </div>
     `;}).join('')}
   `;
+  // スペイン語表示の時は、気づきのメモも翻訳して表示する
+  if(LANG==='es') fillEsTranslations($('goodmomentHistoryBody'));
 }
 function openGoodmomentOverlay(){
   renderGoodmomentHistory();
