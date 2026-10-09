@@ -303,6 +303,20 @@
   .cal-legend span{display:inline-flex;align-items:center;gap:4px;}
   .cal-legend .dot{width:7px;height:7px;border-radius:50%;display:inline-block;}
 
+  /* Cloud loading / retry screen (shown when this device has no local data yet) */
+  #cloudStatus{display:none;min-height:100vh;padding:56px 24px;text-align:center;}
+  #cloudStatus .cs-wrap{max-width:420px;margin:0 auto;}
+  #cloudStatus .cs-icon{font-size:40px;margin-bottom:12px;}
+  #cloudStatus p{font-size:14px;color:var(--ink);line-height:1.7;margin:0 0 6px;}
+  #cloudStatus p.es{font-size:13px;color:var(--ink-soft);}
+  #cloudStatus .cs-btn{
+    display:block;width:100%;max-width:280px;margin:14px auto 0;padding:12px 16px;
+    border-radius:24px;border:1px solid var(--line);background:var(--card);color:var(--ink);
+    font-size:14px;font-weight:700;cursor:pointer;
+  }
+  #cloudStatus .cs-btn.primary{background:var(--ink);color:#fff;border-color:var(--ink);}
+  #cloudStatus .cs-btn.sub{font-size:12px;font-weight:500;color:var(--ink-soft);}
+
   /* First-time setup screen */
   #setupScreen{display:none;min-height:100vh;padding:36px 20px;}
   .setup-wrap{max-width:480px;margin:0 auto;}
@@ -363,6 +377,22 @@
 </style>
 </head>
 <body>
+
+<div id="cloudStatus">
+  <div class="cs-wrap">
+    <div class="cs-icon" id="csIcon">🐾</div>
+    <div id="csLoading">
+      <p>クラウドからデータを読み込み中です…<br>少し時間がかかることがあります。</p>
+      <p class="es">Cargando datos desde la nube… Puede tardar unos segundos.</p>
+    </div>
+    <div id="csFailed" style="display:none;">
+      <p>データを読み込めませんでした。<br>電波の良い場所で、もう一度お試しください。<br>（アプリ内ブラウザで開いている場合は、Safariなどで開き直すと成功することがあります）</p>
+      <p class="es">No se pudieron cargar los datos. Inténtalo de nuevo con buena conexión. (Si lo abriste desde otra app, prueba abrirlo en Safari.)</p>
+      <button class="cs-btn primary" id="csRetry">もう一度試す / Reintentar</button>
+      <button class="cs-btn sub" id="csSetup">新しく始める(通常は不要) / Empezar de cero</button>
+    </div>
+  </div>
+</div>
 
 <div id="setupScreen">
   <div class="setup-wrap">
@@ -1453,38 +1483,48 @@ function loadScriptWithTimeout(src, timeoutMs){
 // 動作にフォールバックする。
 async function initCloudSync(){
   try{
-    const appLoaded = await loadScriptWithTimeout(FB_SDK_BASE + 'firebase-app-compat.js', 4000);
-    if(!appLoaded){
-      console.warn(LANG==='es' ? 'La carga de la sincronización en la nube agotó el tiempo de espera (funcionando sin conexión)' : 'クラウド同期の読み込みがタイムアウトしました(オフラインのまま動作します)');
-      return;
+    // 再試行されても安全なように、すでに読み込めたものは読み込み直さない。
+    if(typeof firebase === 'undefined' || !firebase.initializeApp){
+      const appLoaded = await loadScriptWithTimeout(FB_SDK_BASE + 'firebase-app-compat.js', 10000);
+      if(!appLoaded){
+        console.warn(LANG==='es' ? 'La carga de la sincronización en la nube agotó el tiempo de espera (funcionando sin conexión)' : 'クラウド同期の読み込みがタイムアウトしました(オフラインのまま動作します)');
+        return;
+      }
     }
-    await Promise.all([
-      loadScriptWithTimeout(FB_SDK_BASE + 'firebase-auth-compat.js', 4000),
-      loadScriptWithTimeout(FB_SDK_BASE + 'firebase-database-compat.js', 4000),
-    ]);
+    const pending = [];
+    if(typeof firebase !== 'undefined' && !firebase.auth){
+      pending.push(loadScriptWithTimeout(FB_SDK_BASE + 'firebase-auth-compat.js', 10000));
+    }
+    if(typeof firebase !== 'undefined' && !firebase.database){
+      pending.push(loadScriptWithTimeout(FB_SDK_BASE + 'firebase-database-compat.js', 10000));
+    }
+    if(pending.length) await Promise.all(pending);
     if(typeof firebase === 'undefined' || !firebase.auth || !firebase.database){
       console.warn(LANG==='es' ? 'No se pudo cargar el SDK de sincronización en la nube (funcionando sin conexión)' : 'クラウド同期SDKの読み込みに失敗しました(オフラインのまま動作します)');
       return;
     }
 
-    firebase.initializeApp(firebaseConfig);
+    if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
     logsRef = db.ref('sync/logs');
     dogsRef = db.ref('sync/dogs');
 
+    if(auth.currentUser){ fbReady = true; return; }
+
     await new Promise(resolve=>{
       let done = false;
       const finish = ()=>{ if(!done){ done = true; resolve(); } };
-      auth.onAuthStateChanged(user=>{
+      const unsub = auth.onAuthStateChanged(user=>{
         if(user) fbReady = true;
+        if(user){ try{ unsub(); }catch(e){} }
         finish();
       });
       auth.signInAnonymously().catch(e=>{
         console.warn(LANG==='es' ? 'Falló el inicio de sesión anónimo para la sincronización (funcionando sin conexión):' : 'クラウド同期用の匿名ログインに失敗しました(オフラインのまま動作します):', e);
         finish();
       });
-      setTimeout(finish, 4000);
+      setTimeout(finish, 10000);
     });
   }catch(e){
     console.warn(LANG==='es' ? 'No se pudo iniciar la sincronización en la nube (funcionando sin conexión):' : 'クラウド同期を初期化できませんでした(オフラインのまま動作します):', e);
@@ -1495,28 +1535,31 @@ async function initCloudSync(){
 // データをそのまま取り込む。獣医さんの端末で初めて開いたときに、
 // 手入力のセットアップ画面を出さずに済むようにするための処理。
 async function tryAdoptFromCloud(){
-  if(!fbReady || !dogsRef || !logsRef) return false;
+  // 戻り値: 'ok'=取り込めた / 'empty'=クラウドに犬データが無い(本当の初回) / 'error'=通信や権限の失敗
+  if(!fbReady || !dogsRef || !logsRef) return 'error';
   try{
     const dogsSnap = await dogsRef.once('value');
     const remoteDogs = dogsSnap.val();
-    if(!remoteDogs || !Array.isArray(remoteDogs) || !remoteDogs.length) return false;
+    if(!remoteDogs || !Array.isArray(remoteDogs) || !remoteDogs.length) return 'empty';
     DOGS = remoteDogs;
     saveDogsConfig();
     const logsSnap = await logsRef.once('value');
     logs = logsSnap.val() || {};
     localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
-    return true;
+    return 'ok';
   }catch(e){
     console.warn(LANG==='es' ? 'Falló la descarga desde la nube:' : 'クラウドからの取り込みに失敗しました:', e);
-    return false;
+    return 'error';
   }
 }
 
 // 相手側(獣医またはMo)が記録を追加・変更するたびに呼ばれ、このタブの
 // 表示にも取り込む。mergeLogsで既存のローカル分と統合するので、届いた
 // 差分がこちらの未保存データを消すことはない。
+let cloudListenersAttached = false;
 function attachCloudListeners(){
-  if(!logsRef || !dogsRef) return;
+  if(!logsRef || !dogsRef || cloudListenersAttached) return;
+  cloudListenersAttached = true;
 
   logsRef.on('value', snap=>{
     const remote = snap.val() || {};
@@ -2864,6 +2907,49 @@ $('manageSaveBtn').onclick = async ()=>{
   renderAll();
 };
 
+function showCloudStatus(state){
+  document.querySelector('header').style.display = 'none';
+  document.querySelector('main').style.display = 'none';
+  $('setupScreen').style.display = 'none';
+  $('cloudStatus').style.display = 'block';
+  $('csLoading').style.display = (state==='loading') ? '' : 'none';
+  $('csFailed').style.display = (state==='failed') ? '' : 'none';
+  $('csIcon').textContent = (state==='failed') ? '📡' : '🐾';
+}
+function hideCloudStatus(){
+  $('cloudStatus').style.display = 'none';
+  document.querySelector('header').style.display = '';
+  document.querySelector('main').style.display = '';
+}
+
+async function startWithoutLocalData(){
+  showCloudStatus('loading');
+  let result = 'error';
+  for(let attempt=0; attempt<2; attempt++){
+    await initCloudSync();
+    if(fbReady){
+      result = await tryAdoptFromCloud();
+      if(result!=='error') break;
+    }
+  }
+  if(fbReady) attachCloudListeners();
+  if(result==='ok'){
+    hideCloudStatus();
+    activeDog = DOGS[0].id;
+    await loadLogs();
+    renderAll();
+  }else if(result==='empty'){
+    // クラウドにも犬データが無い = 本当の初回セットアップ
+    hideCloudStatus();
+    showSetupScreen();
+  }else{
+    showCloudStatus('failed');
+  }
+}
+
+$('csRetry').onclick = ()=> startWithoutLocalData();
+$('csSetup').onclick = ()=>{ $('cloudStatus').style.display = 'none'; showSetupScreen(); };
+
 (async ()=>{
   applyI18n();
   let ready = initDogs();
@@ -2888,17 +2974,9 @@ $('manageSaveBtn').onclick = async ()=>{
     });
   }else{
     // ローカルにまだ何も無い(獣医さんの端末で初めて開いた場合など)。
-    // この場合だけ、クラウドの内容を取り込めるか試してから判断する。
-    await initCloudSync();
-    attachCloudListeners();
-    ready = await tryAdoptFromCloud();
-    if(ready){
-      activeDog = DOGS[0].id;
-      await loadLogs();
-      renderAll();
-    }else{
-      showSetupScreen();
-    }
+    // クラウドの内容を取り込めるか試してから判断する。通信が遅いだけで
+    // いきなり初期画面に落ちないよう、読み込み中表示と再試行を挟む。
+    startWithoutLocalData();
   }
 })();
 
