@@ -1924,6 +1924,14 @@ async function translateJaToEs(text){
   let dictApplied = false;
   const placeholders = {}; // プレースホルダー→辞書訳 の対応表
   let phIndex = 0;
+  // 「夫」はMo自身の夫のこと。翻訳APIに任せると "su marido" になって不自然なので
+  // "mi esposo" に固定する。大丈夫・丈夫・工夫・夫婦 などの熟語は除外する。
+  queryText = queryText.replace(/(^|[^丈工])夫(?!婦)/g, function(m, pre){
+    const ph = '§' + (phIndex++) + '§';
+    placeholders[ph] = 'mi esposo';
+    dictApplied = true;
+    return pre + ph;
+  });
   const dictKeys = Object.keys(dict).sort((a,b)=> b.length - a.length);
   for(const key of dictKeys){
     if(queryText.includes(key)){
