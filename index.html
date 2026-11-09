@@ -530,6 +530,7 @@
 
     <div style="border-top:1px solid var(--line);margin-top:16px;padding-top:14px;">
       <div style="font-weight:700;font-size:13px;margin-bottom:8px;" data-i18n="behaviorExportTitle">相談用にまとめる</div>
+      <div data-i18n="behaviorExportHint" style="font-size:11px;color:var(--ink-soft);line-height:1.5;margin:-4px 0 10px;">記録をコピーして、ChatGPTなどのAIに貼り付けて相談できます。</div>
       <div style="display:flex;gap:8px;margin-bottom:10px;">
         <div style="flex:1;">
           <label for="behaviorFrom" data-i18n="behaviorFromLabel" style="display:block;font-size:11px;color:var(--ink-soft);margin-bottom:3px;">いつから</label>
@@ -1696,6 +1697,7 @@ const I18N = {
     behaviorFromLabel: 'いつから',
     behaviorToLabel: 'いつまで',
     behaviorExportBtn: 'この期間をまとめてコピー',
+    behaviorExportHint: '記録をコピーして、ChatGPTなどのAIに貼り付けて相談できます。',
     behaviorExportEmpty: 'この期間の記録がありません。',
     behaviorCopiedMsg: 'コピーしました。AIとのチャットに貼り付けて相談できます。',
     behaviorCopyFallbackMsg: 'テキストを選択したので、そのままコピーしてください(自動コピーは使えませんでした)。',
@@ -1777,10 +1779,11 @@ const I18N = {
     behaviorOverlayTitle: 'Registro de comportamiento/socialización',
     behaviorRecordBtn: 'Registrar',
     behaviorHistoryLabel: 'Registros',
-    behaviorExportTitle: 'Preparar para consultar',
+    behaviorExportTitle: 'Consultar con una IA',
     behaviorFromLabel: 'Desde',
     behaviorToLabel: 'Hasta',
-    behaviorExportBtn: 'Copiar este período',
+    behaviorExportBtn: 'Copiar registros para la IA',
+    behaviorExportHint: 'Copia los registros de este período y pégalos en ChatGPT, Claude u otra IA para pedir consejos.',
     behaviorExportEmpty: 'No hay registros en este período.',
     behaviorCopiedMsg: 'Copiado. Puedes pegarlo en un chat con una IA para consultar.',
     behaviorCopyFallbackMsg: 'Se seleccionó el texto; cópialo manualmente (no se pudo copiar automáticamente).',
