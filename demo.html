@@ -1513,10 +1513,10 @@ const I18N = {
     goodmomentPointsSuffix: 'pt',
     goodmomentNextLevelTemplate: '次は「{level}」まであと{n}pt',
     goodmomentMaxLevelMsg: '最高レベルです',
-    goodLv0: '様子見中',
-    goodLv1: '距離が縮んできた',
-    goodLv2: '阿吽の呼吸',
-    goodLv3: '相思相犬',
+    goodLv0: '警戒されている',
+    goodLv1: '警戒が少しゆるんできた',
+    goodLv2: '安心できる相手になってきた',
+    goodLv3: '信頼されている',
   },
   es: {
     setupTitle: '🐾 ¡Bienvenido a Wanko Note!',
@@ -1598,10 +1598,10 @@ const I18N = {
     goodmomentPointsSuffix: 'pt',
     goodmomentNextLevelTemplate: 'Faltan {n}pt para "{level}"',
     goodmomentMaxLevelMsg: 'Nivel máximo alcanzado',
-    goodLv0: 'Conociéndose',
-    goodLv1: 'Cada vez más cerca',
-    goodLv2: 'En sintonía',
-    goodLv3: 'Complicidad total',
+    goodLv0: 'Aún en alerta',
+    goodLv1: 'La desconfianza baja',
+    goodLv2: 'Se siente seguro/a',
+    goodLv3: 'Confía en ti',
   },
 };
 
@@ -2561,23 +2561,51 @@ function renderGoodmomentBarometer(all){
   const clamped = Math.max(0, total);
   const level = goodLevelFor(clamped);
   const next = nextGoodLevel(clamped);
-  const span = next ? (next.min - level.min) : 1;
-  const progressInLevel = next ? (clamped - level.min) : 1;
-  const pct = next ? Math.max(0, Math.min(100, Math.round(progressInLevel / span * 100))) : 100;
+  // ゲージは「最初から最高段階まで」の全体を1本で見せる(段階ごとにリセットしない)
+  const maxPt = GOOD_LEVELS[GOOD_LEVELS.length-1].min;
+  const pct = Math.max(0, Math.min(100, clamped / maxPt * 100));
+  const sfx = t('goodmomentPointsSuffix');
 
   const nextLine = next
-    ? `<div style="font-size:11px;color:var(--ink-soft);margin-top:6px;">${t('goodmomentNextLevelTemplate').replace('{level}', t(next.key)).replace('{n}', next.min-total)}</div>`
-    : `<div style="font-size:11px;color:var(--ink-soft);margin-top:6px;">${t('goodmomentMaxLevelMsg')}</div>`;
+    ? `<div style="font-size:11px;color:var(--ink-soft);margin-top:10px;">${t('goodmomentNextLevelTemplate').replace('{level}', t(next.key)).replace('{n}', next.min-total)}</div>`
+    : `<div style="font-size:11px;color:var(--ink-soft);margin-top:10px;">${t('goodmomentMaxLevelMsg')}</div>`;
+
+  // 段階の境目(目盛り)。0ptは左端なので線は引かない
+  const ticks = GOOD_LEVELS.filter(l=>l.min>0).map(l=>
+    `<div style="position:absolute;top:0;bottom:0;left:${l.min/maxPt*100}%;width:2px;margin-left:-1px;background:var(--card);"></div>`
+  ).join('');
+  const tickNums = GOOD_LEVELS.map(l=>{
+    const left = l.min/maxPt*100;
+    const tr = l.min===0 ? 'translateX(0)' : (l.min===maxPt ? 'translateX(-100%)' : 'translateX(-50%)');
+    return `<div style="position:absolute;left:${left}%;transform:${tr};font-size:10px;color:var(--ink-soft);">${l.min}</div>`;
+  }).join('');
+
+  // 全段階の一覧: 到達済み(✓)/ いまここ(●)/ まだ(○)
+  const rows = GOOD_LEVELS.map(l=>{
+    const isCur = (l===level);
+    const reached = clamped >= l.min;
+    const mark = isCur ? '●' : (reached ? '✓' : '○');
+    const color = isCur ? 'var(--good)' : (reached ? 'var(--ink)' : 'var(--ink-soft)');
+    return `
+      <div style="display:flex;align-items:baseline;gap:8px;padding:4px 0;font-size:${isCur?13:12}px;font-weight:${isCur?700:500};color:${color};${reached?'':'opacity:.7;'}">
+        <span style="width:14px;text-align:center;flex:none;">${mark}</span>
+        <span style="flex:1;">${t(l.key)}</span>
+        <span style="font-size:11px;font-weight:500;color:var(--ink-soft);flex:none;">${l.min}${sfx}〜</span>
+      </div>`;
+  }).join('');
 
   $('goodmomentBarometer').innerHTML = `
     <div style="border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--card);">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
         <div style="font-weight:700;font-size:14px;color:var(--good);">${t(level.key)}</div>
-        <div style="font-size:11px;color:var(--ink-soft);">${total}${t('goodmomentPointsSuffix')}</div>
+        <div style="font-size:11px;color:var(--ink-soft);">${total}${sfx}</div>
       </div>
-      <div style="height:10px;border-radius:6px;background:var(--paper-deep);overflow:hidden;">
+      <div style="position:relative;height:12px;border-radius:6px;background:var(--paper-deep);overflow:hidden;">
         <div style="height:100%;width:${pct}%;background:var(--good);border-radius:6px;"></div>
+        ${ticks}
       </div>
+      <div style="position:relative;height:14px;margin-top:3px;">${tickNums}</div>
+      <div style="margin-top:8px;border-top:1px solid var(--line);padding-top:6px;">${rows}</div>
       ${nextLine}
     </div>
   `;
